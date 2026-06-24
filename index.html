@@ -7,26 +7,52 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Backdrop luar untuk layar lebar seperti Laptop, Tablet, TV */
         body {
             font-family: 'Fredoka', sans-serif;
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            background: radial-gradient(circle, #2e1065 0%, #0f172a 100%);
             height: 100dvh;
             width: 100vw;
             overflow: hidden; 
-            transition: background 0.5s ease;
-            position: relative;
-            touch-action: none; /* Mencegah layar tergulung / pull-to-refresh di HP */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none; /* Mencegah pull-to-refresh di HP */
         }
 
-        body.dark-mode {
+        /* Container Rasio Aspek 16:9 untuk Laptop/TV/Tablet */
+        #gameContainer {
+            width: 100vw;
+            height: 100dvh;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: background 0.5s ease;
+        }
+
+        #gameContainer.dark-mode {
             background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
             color: white;
         }
 
+        @media (min-width: 768px) {
+            #gameContainer {
+                width: calc(90dvh * 1.7777); /* Batasi ke rasio 16:9 */
+                height: 90dvh;
+                max-width: 95vw;
+                max-height: 95vh;
+                border-radius: 2.5rem;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                border: 6px solid rgba(255, 255, 255, 0.3);
+            }
+        }
+
         .bg-decor {
-            position: fixed;
-            z-index: -1;
-            opacity: 0.4;
+            position: absolute;
+            z-index: 1;
+            opacity: 0.3;
             pointer-events: none;
         }
 
@@ -44,7 +70,7 @@
         .is-dragging {
             opacity: 0.95;
             transform: scale(1.15);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5) !important;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4) !important;
             pointer-events: none;
             z-index: 99999 !important;
             margin: 0 !important;
@@ -83,7 +109,7 @@
         }
 
         #confetti-canvas {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
@@ -104,54 +130,6 @@
             border-radius: 10px;
         }
 
-        #splashScreen {
-            position: fixed;
-            inset: 0;
-            z-index: 999999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
-        }
-
-        .splash-dynamic-bg {
-            background: linear-gradient(-45deg, #a8edea, #fed6e3, #e0c3fc, #8ec5fc);
-            background-size: 400% 400%;
-            animation: bgGradient 10s ease infinite;
-        }
-        .dark-mode .splash-dynamic-bg {
-            background: linear-gradient(-45deg, #374151, #1f2937, #4c1d95, #1e3a8a);
-        }
-        @keyframes bgGradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        #splashScreen.hide {
-            opacity: 0;
-            transform: scale(1.2);
-            pointer-events: none;
-        }
-
-        @keyframes floatingAnim {
-            0%, 100% { transform: translateY(0) rotate(-2deg); }
-            50% { transform: translateY(-15px) rotate(2deg); }
-        }
-        .animate-floating {
-            animation: floatingAnim 4s ease-in-out infinite;
-        }
-        @keyframes titleBounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px) scale(1.05); }
-        }
-        .letter-anim {
-            display: inline-block;
-            animation: titleBounce 1.5s infinite ease-in-out;
-        }
-
         .canvas-container {
             position: relative;
             background-color: white;
@@ -164,6 +142,10 @@
             width: 100%;
             height: 100%;
         }
+        .dark-mode .canvas-container {
+            background-color: #1f2937;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.4);
+        }
         #writingCanvas {
             display: block;
             touch-action: none;
@@ -173,232 +155,394 @@
         @media (max-width: 640px) {
             .compact-btn-text { display: none; }
         }
+
+        /* --- ANIMASI GRADIENT LATAR SPLASH SCREEN --- */
+        .splash-dynamic-bg {
+            background: linear-gradient(-45deg, #a8edea, #fed6e3, #e0c3fc, #8ec5fc);
+            background-size: 400% 400%;
+            animation: bgGradient 10s ease infinite;
+        }
+        .dark-mode .splash-dynamic-bg {
+            background: linear-gradient(-45deg, #374151, #1f2937, #4c1d95, #1e3a8a);
+            background-size: 400% 400%;
+            animation: bgGradient 10s ease infinite;
+        }
+        @keyframes bgGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- PERBAIKAN ANIMASI PARTIKEL MELAYANG BACKDROP --- */
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg) scale(0.7); opacity: 0; }
+            10% { opacity: 0.45; }
+            90% { opacity: 0.45; }
+            100% { transform: translateY(-115dvh) rotate(360deg) scale(1.2); opacity: 0; }
+        }
+        .floating-splash-particle {
+            position: absolute;
+            bottom: -60px; /* Mulai tepat di bawah layar */
+            animation: floatUp 14s linear infinite;
+            pointer-events: none;
+            user-select: none;
+            z-index: 1;
+        }
     </style>
 </head>
 <body class="flex flex-col text-gray-800">
 
-    <div class="bg-decor text-6xl" style="top: 10%; left: 5%; transform: rotate(-15deg);">☁️</div>
-    <div class="bg-decor text-7xl" style="bottom: 15%; right: -5%; transform: rotate(10deg);">☁️</div>
-    <div class="bg-decor text-4xl" style="top: 40%; right: 10%; opacity: 0.2;">⭐</div>
-    <div class="bg-decor text-5xl" style="bottom: 30%; left: 10%; opacity: 0.2;">🎈</div>
+    <!-- Container Utama Permainan (Mengatur Rasio 16:9 di Tablet/TV/Laptop) -->
+    <div id="gameContainer">
 
-    <!-- Splash Screen -->
-    <div id="splashScreen" class="splash-dynamic-bg">
-        <div class="relative z-10 flex flex-col items-center w-full max-w-4xl mx-auto px-4 h-full justify-center">
-            <div class="relative mb-6 sm:mb-8">
-                <div class="text-[7rem] sm:text-[10rem] drop-shadow-2xl animate-bounce" style="animation-duration: 2s;">🦒</div>
-                <div class="absolute -bottom-2 -right-6 text-4xl sm:text-7xl drop-shadow-xl animate-floating" style="animation-delay: 0.5s;">✨</div>
-            </div>
+        <div class="bg-decor text-6xl" style="top: 10%; left: 5%; transform: rotate(-15deg);">☁️</div>
+        <div class="bg-decor text-7xl" style="bottom: 15%; right: -5%; transform: rotate(10deg);">☁️</div>
+        <div class="bg-decor text-4xl" style="top: 40%; right: 10%; opacity: 0.2;">⭐</div>
+        <div class="bg-decor text-5xl" style="bottom: 30%; left: 10%; opacity: 0.2;">🎈</div>
+
+        <!-- Splash Screen (Dilengkapi Scroll-Container agar tidak bocor/terpotong di HP layar kecil) -->
+        <div id="splashScreen" class="splash-dynamic-bg absolute inset-0 z-[9999] flex flex-col items-center overflow-y-auto scroll-container p-4 sm:p-6">
             
-            <h1 class="flex flex-wrap justify-center gap-1 sm:gap-2 mb-4 text-4xl sm:text-7xl font-extrabold text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.3)] text-center" style="-webkit-text-stroke: 1.5px #4a5568;">
-                <span class="text-red-400 letter-anim" style="animation-delay: 0.1s;">B</span>
-                <span class="text-blue-400 letter-anim" style="animation-delay: 0.2s;">E</span>
-                <span class="text-green-400 letter-anim" style="animation-delay: 0.3s;">L</span>
-                <span class="text-yellow-400 letter-anim" style="animation-delay: 0.4s;">A</span>
-                <span class="text-purple-400 letter-anim" style="animation-delay: 0.5s;">J</span>
-                <span class="text-pink-400 letter-anim" style="animation-delay: 0.6s;">A</span>
-                <span class="text-teal-400 letter-anim" style="animation-delay: 0.7s;">R</span>
-                <span class="w-2 sm:w-4"></span>
-                <span class="text-orange-400 letter-anim" style="animation-delay: 0.8s;">Y</span>
-                <span class="text-indigo-400 letter-anim" style="animation-delay: 0.9s;">U</span>
-                <span class="text-red-500 letter-anim" style="animation-delay: 1.0s;">K</span>
-            </h1>
-            
-            <p class="text-base sm:text-2xl font-bold text-white drop-shadow-md mb-10 bg-black/20 px-6 py-3 rounded-full backdrop-blur-sm shadow-inner border border-white/30 text-center w-[90%] max-w-lg">
-                Belajar Angka, Huruf, & Menulis! 🚀
-            </p>
-            
-            <button id="btnStartSplash" class="group relative px-10 py-5 font-extrabold text-2xl sm:text-4xl text-white rounded-full bg-gradient-to-b from-green-400 to-green-600 shadow-[0_8px_0_#166534,0_15px_20px_rgba(0,0,0,0.4)] active:shadow-[0_0px_0_#166534,0_0px_0_rgba(0,0,0,0.4)] active:translate-y-2 transition-all duration-150 flex items-center gap-3 justify-center w-[85%] max-w-sm">
-                <span class="absolute inset-0 w-full h-full rounded-full opacity-30 bg-[linear-gradient(rgba(255,255,255,0.8)_0%,transparent_50%)]"></span>
-                <span class="relative tracking-wider drop-shadow-md">MULAI</span>
-                <span class="relative group-hover:rotate-12 transition-transform text-3xl sm:text-5xl">🎮</span>
-            </button>
-        </div>
-    </div>
+            <!-- Kontainer Partikel Animasi Latar Belakang -->
+            <div id="splashBgParticles" class="absolute inset-0 pointer-events-none overflow-hidden z-0"></div>
 
-    <!-- Header / Navigasi (Merapat untuk layar lega) -->
-    <header class="flex justify-between items-center p-2 sm:p-3 glass-panel shadow-md z-10 shrink-0 gap-1 sm:gap-4 m-2 sm:m-3 rounded-2xl">
-        <div class="flex items-center gap-1 sm:gap-2 flex-1">
-            <span class="text-3xl sm:text-4xl drop-shadow-sm">🦒</span>
-            <div class="hidden md:block">
-                <h1 id="gameTitle" class="text-xl font-extrabold text-indigo-700 dark:text-indigo-300 drop-shadow-sm leading-tight">Main Edukasi</h1>
-            </div>
-            <!-- Tombol Pilih Game -->
-            <button onclick="openModeSelector()" class="ml-1 sm:ml-4 bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold shadow-[0_4px_0_#3730a3] active:translate-y-1 active:shadow-none transition-all text-xs sm:text-base flex items-center gap-1 sm:gap-2">
-                <span class="text-base sm:text-lg">🎮</span> <span class="compact-btn-text">Pilih Game</span>
-            </button>
-            <!-- Tombol Keluar -->
-            <button onclick="exitGame()" class="ml-1 bg-gradient-to-b from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold shadow-[0_4px_0_#991b1b] active:translate-y-1 active:shadow-none transition-all text-xs sm:text-base flex items-center gap-1 sm:gap-2">
-                <span class="text-base sm:text-lg">🚪</span> <span class="compact-btn-text">Keluar</span>
-            </button>
-        </div>
-        
-        <div class="flex items-center gap-1.5 sm:gap-3 justify-end">
-            <div id="scoreBox" class="bg-white dark:bg-gray-800 px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-inner font-extrabold border-2 border-yellow-400 flex items-center gap-1 sm:gap-2 text-sm sm:text-lg">
-                <span class="text-yellow-500">⭐</span> <span id="scoreDisplay" class="text-indigo-700 dark:text-indigo-300">0</span>
-            </div>
-            <div class="flex gap-1">
-                <button id="btnSound" class="text-lg sm:text-2xl p-1.5 sm:p-2 rounded-full bg-white/70 dark:bg-gray-700/70 hover:bg-white transition shadow-sm" title="Suara">🔊</button>
-                <button id="btnTheme" class="text-lg sm:text-2xl p-1.5 sm:p-2 rounded-full bg-white/70 dark:bg-gray-700/70 hover:bg-white transition shadow-sm" title="Tema Gelap">🌙</button>
-                <button id="btnSettings" class="text-lg sm:text-2xl p-1.5 sm:p-2 rounded-full bg-indigo-100 dark:bg-indigo-900/70 hover:bg-indigo-200 transition shadow-sm" title="Pengaturan">⚙️</button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Konten Utama (Memanfaatkan min-h-0 agar flexbox sempurna) -->
-    <main class="flex-1 flex flex-col px-2 pb-2 sm:px-3 sm:pb-3 overflow-hidden relative w-full max-w-5xl mx-auto gap-2 sm:gap-3 min-h-0">
-        
-        <!-- AREA GAME 1: COCOKKAN (MATCH MODE & COUNT MODE) -->
-        <div id="gamePlayMatch" class="flex-1 flex flex-col gap-2 sm:gap-3 overflow-hidden min-h-0">
-            <!-- Tempat Target -->
-            <!-- flex-[1.5] memberi rasio kotak target lebih besar agar lebih jelas -->
-            <section class="flex-[1.5] glass-panel rounded-3xl p-2 sm:p-4 flex flex-col shadow-lg overflow-hidden border-t-8 border-t-pink-400 min-h-0">
-                <h2 id="targetTitle" class="text-sm sm:text-xl font-extrabold mb-1 text-center text-pink-500 drop-shadow-sm shrink-0">Tempat Target</h2>
-                <!-- Container dikontrol dinamis melalui javascript -->
-                <div id="targetBoard"></div>
-            </section>
-
-            <!-- Pilihan Bawah -->
-            <section class="flex-1 glass-panel rounded-3xl p-2 sm:p-4 flex flex-col shadow-lg overflow-hidden bg-yellow-50/50 dark:bg-yellow-900/20 border-t-8 border-t-yellow-400 min-h-0">
-                <h2 id="sourceTitle" class="text-sm sm:text-xl font-extrabold mb-0 text-center text-yellow-600 dark:text-yellow-400 drop-shadow-sm shrink-0">Pilihan Bawah</h2>
-                <p id="subtitleText" class="text-center text-[10px] sm:text-sm mb-1 font-bold text-gray-600 dark:text-gray-300 shrink-0">Tarik dan cocokkan yang sama!</p>
-                <div id="sourceBoard"></div>
-            </section>
-        </div>
-
-        <!-- AREA GAME 2: MENULIS HURUF / ANGKA -->
-        <div id="gamePlayWrite" class="flex-1 hidden flex-col gap-2 sm:gap-3 overflow-hidden min-h-0">
-            <section class="glass-panel rounded-3xl p-2 sm:p-4 flex flex-row items-center justify-between shadow-lg shrink-0 border-t-8 border-teal-400 bg-teal-50/30 dark:bg-teal-900/20">
-                <button onclick="prevLetter()" class="bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl px-4 py-2 sm:px-5 sm:py-3 font-bold text-xl sm:text-3xl shadow-[0_4px_0_#3730a3] active:translate-y-1 active:shadow-none transition-all">◀</button>
-                <div class="flex flex-col items-center flex-1">
-                    <span id="writeLabel" class="text-[10px] sm:text-sm text-teal-600 dark:text-teal-400 font-extrabold tracking-widest bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm mb-1">HURUF</span>
-                    <span id="writeLetterDisplay" class="text-4xl sm:text-6xl font-extrabold text-indigo-700 dark:text-indigo-300 leading-none drop-shadow-md">A</span>
+            <div class="relative z-10 flex flex-col items-center w-full max-w-xl mx-auto my-auto py-4">
+                <!-- Logo -->
+                <div class="relative mb-4 sm:mb-6 shrink-0">
+                    <div class="flex gap-2 text-[5rem] sm:text-[7rem] md:text-[8rem] drop-shadow-2xl animate-bounce justify-center items-center" style="animation-duration: 2s;">
+                        <span>🔠</span><span>🔢</span>
+                    </div>
+                    <div class="absolute -bottom-2 -right-4 text-3xl sm:text-5xl drop-shadow-xl animate-floating" style="animation-delay: 0.5s;">✨</div>
                 </div>
-                <button onclick="nextLetter()" class="bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl px-4 py-2 sm:px-5 sm:py-3 font-bold text-xl sm:text-3xl shadow-[0_4px_0_#3730a3] active:translate-y-1 active:shadow-none transition-all">▶</button>
-            </section>
+                
+                <!-- Judul Game (Memperbaiki kegagalan animasi letter-anim dengan mengusir sifat flex dari h1) -->
+                <h1 class="text-center mb-2 text-3xl sm:text-5xl font-extrabold text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.3)] whitespace-nowrap" style="-webkit-text-stroke: 1.5px #4a5568;">
+                    <span class="text-red-400 letter-anim inline-block mx-0.5" style="animation-delay: 0.1s;">B</span>
+                    <span class="text-blue-400 letter-anim inline-block mx-0.5" style="animation-delay: 0.2s;">E</span>
+                    <span class="text-green-400 letter-anim inline-block mx-0.5" style="animation-delay: 0.3s;">L</span>
+                    <span class="text-yellow-400 letter-anim inline-block mx-0.5" style="animation-delay: 0.4s;">A</span>
+                    <span class="text-purple-400 letter-anim inline-block mx-0.5" style="animation-delay: 0.5s;">J</span>
+                    <span class="text-pink-400 letter-anim inline-block mx-0.5" style="animation-delay: 0.6s;">A</span>
+                    <span class="text-teal-400 letter-anim inline-block mx-0.5" style="animation-delay: 0.7s;">R</span>
+                    <span class="inline-block w-2 sm:w-4"></span>
+                    <span class="text-orange-400 letter-anim inline-block mx-0.5" style="animation-delay: 0.8s;">Y</span>
+                    <span class="text-indigo-400 letter-anim inline-block mx-0.5" style="animation-delay: 0.9s;">U</span>
+                    <span class="text-red-500 letter-anim inline-block mx-0.5" style="animation-delay: 1.0s;">K</span>
+                </h1>
+                
+                <p class="text-xs sm:text-lg font-bold text-white drop-shadow-md mb-6 bg-black/20 px-4 py-1.5 rounded-full backdrop-blur-sm shadow-inner border border-white/30 text-center shrink-0">
+                    Petualangan Belajar Menulis &amp; Berhitung! 🚀
+                </p>
+                
+                <div class="flex flex-col gap-3 w-full shrink-0">
+                    <button id="btnStartSplash" class="group relative px-10 py-5 font-extrabold text-2xl sm:text-4xl text-white rounded-full bg-gradient-to-b from-green-400 to-green-600 shadow-[0_6px_0_#166534,0_10px_15px_rgba(0,0,0,0.3)] active:shadow-[0_0px_0_#166534,0_0px_0_rgba(0,0,0,0.4)] active:translate-y-1.5 transition-all duration-150 flex items-center gap-3 justify-center w-full">
+                        <span class="absolute inset-0 w-full h-full rounded-full opacity-30 bg-[linear-gradient(rgba(255,255,255,0.8)_0%,transparent_50%)]"></span>
+                        <span class="relative tracking-wider drop-shadow-md">MULAI BERMAIN</span>
+                        <span class="relative group-hover:rotate-12 transition-transform text-3xl">🎮</span>
+                    </button>
 
-            <section class="flex-1 glass-panel rounded-3xl p-2 sm:p-4 flex flex-col justify-center items-center shadow-lg relative min-h-0 bg-sky-50/30 dark:bg-gray-800/50">
-                <p class="text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 mb-1 font-bold shrink-0 bg-white/70 dark:bg-gray-700/70 px-3 py-1 rounded-full">Tulis mengikuti garis putus-putus ✍️</p>
-                <div id="canvasWrapper" class="canvas-container flex-1 w-full flex items-center justify-center border-4 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl relative shadow-inner">
-                    <canvas id="writingCanvas" class="bg-white shadow-sm rounded-xl cursor-crosshair"></canvas>
+                    <div class="flex gap-2 w-full">
+                        <button id="btnInstructions" class="flex-1 px-4 py-2.5 font-bold text-xs sm:text-sm text-white rounded-2xl bg-blue-500 hover:bg-blue-600 shadow-md flex items-center justify-center gap-1.5 transition-all">
+                            <span>📖</span> <span>Petunjuk</span>
+                        </button>
+                        <button id="btnOpenLeaderboard" class="flex-1 px-4 py-2.5 font-bold text-xs sm:text-sm text-white rounded-2xl bg-amber-500 hover:bg-amber-600 shadow-md flex items-center justify-center gap-1.5 transition-all">
+                            <span>🏆</span> <span>Leaderboard</span>
+                        </button>
+                    </div>
                 </div>
-            </section>
-
-            <section class="shrink-0 flex gap-1.5 sm:gap-4 justify-center">
-                <button onclick="clearCanvas()" class="flex-1 bg-red-400 hover:bg-red-500 text-white font-extrabold py-2 sm:py-3 rounded-2xl shadow-[0_4px_0_#b91c1c] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-lg flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
-                    <span class="text-xl sm:text-2xl">🧹</span> <span>Hapus</span>
-                </button>
-                <button onclick="speakCurrentWriteLetter()" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-extrabold py-2 sm:py-3 rounded-2xl shadow-[0_4px_0_#6b21a8] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-lg flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
-                    <span class="text-xl sm:text-2xl">🔊</span> <span>Dengar</span>
-                </button>
-                <button onclick="checkTracing()" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-extrabold py-2 sm:py-3 rounded-2xl shadow-[0_4px_0_#15803d] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-lg flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
-                    <span class="text-xl sm:text-2xl">👍</span> <span>Selesai</span>
-                </button>
-            </section>
+            </div>
         </div>
 
-    </main>
-
-    <!-- Modal Pilihan Jenis Permainan -->
-    <div id="modalModeSelector" class="fixed inset-0 bg-black/70 backdrop-blur-md hidden items-center justify-center z-[999] p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-[2rem] p-5 sm:p-8 max-w-2xl w-full shadow-2xl pop-in text-center border-8 border-indigo-400 relative">
-            <button onclick="closeModeSelector()" class="absolute top-2 right-4 text-4xl font-bold text-gray-400 hover:text-red-500">&times;</button>
-            
-            <h2 class="text-xl sm:text-3xl font-extrabold mb-4 sm:mb-6 text-indigo-600 dark:text-indigo-400">Pilih Permainan! 🎈</h2>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <button onclick="selectMode('match')" class="group bg-gradient-to-r from-pink-400 to-rose-500 hover:from-pink-500 hover:to-rose-600 text-white p-3 sm:p-4 rounded-3xl shadow-[0_6px_0_#be123c] active:translate-y-2 active:shadow-none transition-all flex items-center justify-between border-2 border-pink-300">
-                    <div class="text-left flex-1">
-                        <span class="block font-extrabold text-base sm:text-xl mb-1">🧩 Cocokkan</span>
-                        <span class="text-[10px] sm:text-sm opacity-95 font-semibold block bg-black/20 rounded-lg px-2 py-1 inline-block">Pasangkan simbol</span>
-                    </div>
-                    <span class="text-4xl sm:text-5xl group-hover:scale-110 transition-transform ml-2">🦒</span>
+        <!-- Header / Navigasi -->
+        <header class="flex justify-between items-center p-2 sm:p-3 glass-panel shadow-md z-10 shrink-0 gap-1 sm:gap-4 m-2 sm:m-3 rounded-2xl">
+            <div class="flex items-center gap-1 sm:gap-2 flex-1">
+                <span class="text-2xl sm:text-4xl drop-shadow-sm flex gap-1 items-center select-none"><span>🔠</span><span>🔢</span></span>
+                <div class="hidden sm:block">
+                    <h1 id="gameTitle" class="text-base sm:text-xl font-extrabold text-indigo-700 dark:text-indigo-300 drop-shadow-sm leading-tight max-w-[120px] truncate">Main Edukasi</h1>
+                </div>
+                <!-- Tombol Pilih Game -->
+                <button onclick="openModeSelector()" class="ml-1 sm:ml-4 bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold shadow-[0_4px_0_#3730a3] active:translate-y-1 active:shadow-none transition-all text-xs sm:text-sm flex items-center gap-1">
+                    <span>🎮</span> <span class="compact-btn-text">Pilih Game</span>
                 </button>
+                <!-- Tombol Keluar -->
+                <button onclick="exitGame()" class="ml-1 bg-gradient-to-b from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold shadow-[0_4px_0_#991b1b] active:translate-y-1 active:shadow-none transition-all text-xs sm:text-sm flex items-center gap-1">
+                    <span>🚪</span> <span class="compact-btn-text">Keluar</span>
+                </button>
+            </div>
+            
+            <div class="flex items-center gap-1.5 sm:gap-3 justify-end shrink-0">
+                <!-- Nyawa / Kesempatan Bermain -->
+                <div id="livesBox" class="bg-red-50 dark:bg-red-950/40 px-2 py-1 sm:px-3 sm:py-2 rounded-full shadow-inner border-2 border-red-400 flex items-center gap-0.5 text-sm sm:text-lg">
+                    <span id="heart1" class="text-red-500">❤️</span>
+                    <span id="heart2" class="text-red-500">❤️</span>
+                    <span id="heart3" class="text-red-500">❤️</span>
+                </div>
+                <!-- Skor -->
+                <div id="scoreBox" class="bg-white dark:bg-gray-800 px-3 py-1 sm:px-4 sm:py-2 rounded-full shadow-inner font-extrabold border-2 border-yellow-400 flex items-center gap-1 text-xs sm:text-base">
+                    <span class="text-yellow-500">⭐</span> <span id="scoreDisplay" class="text-indigo-700 dark:text-indigo-300">0</span>
+                </div>
+                <div class="flex gap-0.5 sm:gap-1">
+                    <button id="btnSound" class="text-sm sm:text-xl p-1.5 rounded-full bg-white/70 dark:bg-gray-700/70 hover:bg-white transition shadow-sm" title="Suara">🔊</button>
+                    <button id="btnTheme" class="text-sm sm:text-xl p-1.5 rounded-full bg-white/70 dark:bg-gray-700/70 hover:bg-white transition shadow-sm" title="Tema Gelap">🌙</button>
+                    <button id="btnSettings" class="text-sm sm:text-xl p-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/70 hover:bg-indigo-200 transition shadow-sm" title="Pengaturan">⚙️</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Konten Utama -->
+        <main class="flex-1 flex flex-col px-2 pb-2 sm:px-3 sm:pb-3 overflow-hidden relative w-full max-w-5xl mx-auto gap-2 sm:gap-3 min-h-0">
+            <!-- Nama Pemain Status Bar saat main -->
+            <div id="playerStatusBar" class="text-center font-bold text-xs sm:text-sm text-indigo-800 dark:text-indigo-300 bg-white/40 dark:bg-gray-900/20 py-1 rounded-lg shrink-0">
+                Pemain: <span id="statusPlayerName">-</span> | Kelas: <span id="statusPlayerClass">-</span>
+            </div>
+
+            <!-- AREA GAME 1: COCOKKAN (MATCH MODE & COUNT MODE) -->
+            <div id="gamePlayMatch" class="flex-1 flex flex-col gap-2 sm:gap-3 overflow-hidden min-h-0">
+                <!-- Tempat Target -->
+                <section class="flex-[1.5] glass-panel rounded-3xl p-2 sm:p-4 flex flex-col shadow-lg overflow-hidden border-t-8 border-t-pink-400 min-h-0">
+                    <h2 id="targetTitle" class="text-sm sm:text-xl font-extrabold mb-1 text-center text-pink-500 drop-shadow-sm shrink-0">Tempat Target</h2>
+                    <div id="targetBoard"></div>
+                </section>
+
+                <!-- Pilihan Bawah -->
+                <section class="flex-1 glass-panel rounded-3xl p-2 sm:p-4 flex flex-col shadow-lg overflow-hidden bg-yellow-50/50 dark:bg-yellow-900/20 border-t-8 border-t-yellow-400 min-h-0">
+                    <h2 id="sourceTitle" class="text-sm sm:text-xl font-extrabold mb-0 text-center text-yellow-600 dark:text-yellow-400 drop-shadow-sm shrink-0">Pilihan Bawah</h2>
+                    <p id="subtitleText" class="text-center text-[10px] sm:text-sm mb-1 font-bold text-gray-600 dark:text-gray-300 shrink-0">Tarik dan cocokkan yang sama!</p>
+                    <div id="sourceBoard"></div>
+                </section>
+            </div>
+
+            <!-- AREA GAME 2: MENULIS HURUF / ANGKA -->
+            <div id="gamePlayWrite" class="flex-1 hidden flex-col gap-2 sm:gap-3 overflow-hidden h-full min-h-0">
+                <section class="glass-panel rounded-3xl p-2 sm:p-4 flex flex-row items-center justify-between shadow-lg shrink-0 border-t-8 border-teal-400 bg-teal-50/30 dark:bg-teal-900/20">
+                    <button onclick="prevLetter()" class="bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl px-4 py-2 sm:px-5 sm:py-3 font-bold text-xl sm:text-3xl shadow-[0_4px_0_#3730a3] active:translate-y-1 active:shadow-none transition-all">◀</button>
+                    <div class="flex flex-col items-center flex-1">
+                        <span id="writeLabel" class="text-[10px] sm:text-sm text-teal-600 dark:text-teal-400 font-extrabold tracking-widest bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-sm mb-1">HURUF</span>
+                        <span id="writeLetterDisplay" class="text-4xl sm:text-6xl font-extrabold text-indigo-700 dark:text-indigo-300 leading-none drop-shadow-md">A</span>
+                    </div>
+                    <button onclick="nextLetter()" class="bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl px-4 py-2 sm:px-5 sm:py-3 font-bold text-xl sm:text-3xl shadow-[0_4px_0_#3730a3] active:translate-y-1 active:shadow-none transition-all">▶</button>
+                </section>
+
+                <section class="flex-1 glass-panel rounded-3xl p-2 sm:p-4 flex flex-col justify-center items-center shadow-lg relative min-h-0 bg-sky-50/30 dark:bg-gray-800/50">
+                    <p class="text-[10px] sm:text-sm text-gray-500 dark:text-gray-400 mb-1 font-bold shrink-0 bg-white/70 dark:bg-gray-700/70 px-3 py-1 rounded-full">Tulis mengikuti garis putus-putus ✍️</p>
+                    <div id="canvasWrapper" class="canvas-container flex-1 w-full flex items-center justify-center border-4 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl relative shadow-inner">
+                        <canvas id="writingCanvas" class="bg-white shadow-sm rounded-xl cursor-crosshair"></canvas>
+                    </div>
+                </section>
+
+                <section class="shrink-0 flex gap-1.5 sm:gap-4 justify-center">
+                    <button onclick="clearCanvas()" class="flex-1 bg-red-400 hover:bg-red-500 text-white font-extrabold py-2 sm:py-3 rounded-2xl shadow-[0_4px_0_#b91c1c] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-lg flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+                        <span class="text-xl sm:text-2xl">🧹</span> <span>Hapus</span>
+                    </button>
+                    <button onclick="speakCurrentWriteLetter()" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-extrabold py-2 sm:py-3 rounded-2xl shadow-[0_4px_0_#6b21a8] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-lg flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+                        <span class="text-xl sm:text-2xl">🔊</span> <span>Dengar</span>
+                    </button>
+                    <button onclick="checkTracing()" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-extrabold py-2 sm:py-3 rounded-2xl shadow-[0_4px_0_#15803d] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-lg flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+                        <span class="text-xl sm:text-2xl">👍</span> <span>Selesai</span>
+                    </button>
+                </section>
+            </div>
+        </main>
+
+        <!-- Modal Pilihan Jenis Permainan (Dilengkapi Form Identitas di Atas Kartu Mode) -->
+        <div id="modalModeSelector" class="fixed inset-0 bg-black/70 backdrop-blur-md hidden items-center justify-center z-[999] p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-[2rem] p-5 sm:p-6 md:p-8 max-w-2xl w-full shadow-2xl pop-in text-center border-8 border-indigo-400 relative max-h-[90vh] overflow-y-auto scroll-container">
+                <button onclick="closeModeSelector()" class="absolute top-2 right-4 text-4xl font-bold text-gray-400 hover:text-red-500">&times;</button>
                 
-                <button onclick="selectMode('countImage')" class="group bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white p-3 sm:p-4 rounded-3xl shadow-[0_6px_0_#b45309] active:translate-y-2 active:shadow-none transition-all flex items-center justify-between border-2 border-yellow-300">
-                    <div class="text-left flex-1">
-                        <span class="block font-extrabold text-base sm:text-xl mb-1">🔢 Hitung Objek</span>
-                        <span class="text-[10px] sm:text-sm opacity-95 font-semibold block bg-black/20 rounded-lg px-2 py-1 inline-block">Jodohkan gambar</span>
-                    </div>
-                    <span class="text-4xl sm:text-5xl group-hover:scale-110 transition-transform ml-2">🍊</span>
-                </button>
+                <h2 class="text-xl sm:text-3xl font-extrabold mb-4 text-indigo-600 dark:text-indigo-400">Pilih Permainan! 🎈</h2>
                 
-                <button onclick="selectMode('writeLetter')" class="group bg-gradient-to-r from-teal-400 to-emerald-500 hover:from-teal-500 hover:to-emerald-600 text-white p-3 sm:p-4 rounded-3xl shadow-[0_6px_0_#047857] active:translate-y-2 active:shadow-none transition-all flex items-center justify-between border-2 border-teal-300">
-                    <div class="text-left flex-1">
-                        <span class="block font-extrabold text-base sm:text-xl mb-1">✍️ Tulis Huruf</span>
-                        <span class="text-[10px] sm:text-sm opacity-95 font-semibold block bg-black/20 rounded-lg px-2 py-1 inline-block">Menulis huruf A - Z</span>
+                <!-- FORM PENDAFTARAN PEMAIN (Pindah ke Sini) -->
+                <div class="bg-indigo-50/80 dark:bg-gray-700/80 p-4 rounded-2xl w-full shadow-inner flex flex-col gap-2.5 border-2 border-indigo-200 dark:border-indigo-900 mb-6 shrink-0 text-left">
+                    <h3 class="text-sm sm:text-base font-extrabold text-indigo-700 dark:text-indigo-300">Isi Identitasmu Dulu Yuk! 📝</h3>
+                    <input type="text" id="inputName" placeholder="Nama Pemain..." class="w-full px-4 py-2 rounded-xl border-2 border-indigo-200 outline-none focus:border-indigo-500 font-semibold text-xs sm:text-sm dark:text-gray-800 bg-white">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="inputClass" placeholder="Kelas..." class="px-4 py-2 rounded-xl border-2 border-indigo-200 outline-none focus:border-indigo-500 font-semibold text-xs sm:text-sm dark:text-gray-800 bg-white">
+                        <input type="text" id="inputSchool" placeholder="Sekolah..." class="px-4 py-2 rounded-xl border-2 border-indigo-200 outline-none focus:border-indigo-500 font-semibold text-xs sm:text-sm dark:text-gray-800 bg-white">
                     </div>
-                    <span class="text-4xl sm:text-5xl group-hover:scale-110 transition-transform ml-2">🅰️</span>
-                </button>
+                </div>
 
-                <button onclick="selectMode('writeNumber')" class="group bg-gradient-to-r from-blue-400 to-cyan-500 hover:from-blue-500 hover:to-cyan-600 text-white p-3 sm:p-4 rounded-3xl shadow-[0_6px_0_#0284c7] active:translate-y-2 active:shadow-none transition-all flex items-center justify-between border-2 border-blue-300">
-                    <div class="text-left flex-1">
-                        <span class="block font-extrabold text-base sm:text-xl mb-1">✍️ Tulis Angka</span>
-                        <span class="text-[10px] sm:text-sm opacity-95 font-semibold block bg-black/20 rounded-lg px-2 py-1 inline-block">Menulis angka 0 - 9</span>
+                <!-- Grid Kartu Pilihan Mode Permainan -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <!-- Game 1 -->
+                    <button onclick="selectMode('match')" class="group bg-gradient-to-r from-pink-400 to-rose-500 hover:from-pink-500 hover:to-rose-600 text-white p-3 sm:p-4 rounded-3xl shadow-[0_6px_0_#be123c] active:translate-y-2 active:shadow-none transition-all flex items-center justify-between border-2 border-pink-300">
+                        <div class="text-left flex-1">
+                            <span class="block font-extrabold text-base sm:text-lg mb-1">🧩 Cocokkan</span>
+                            <span class="text-[10px] sm:text-sm opacity-95 font-semibold block bg-black/20 rounded-lg px-2 py-1 inline-block">Pasangkan simbol</span>
+                        </div>
+                        <span class="text-3xl sm:text-5xl group-hover:scale-110 transition-transform ml-2 flex gap-1"><span>🔠</span><span>🔢</span></span>
+                    </button>
+                    
+                    <!-- Game 2 -->
+                    <button onclick="selectMode('countImage')" class="group bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white p-3 sm:p-4 rounded-3xl shadow-[0_6px_0_#b45309] active:translate-y-2 active:shadow-none transition-all flex items-center justify-between border-2 border-yellow-300">
+                        <div class="text-left flex-1">
+                            <span class="block font-extrabold text-base sm:text-xl mb-1">🔢 Hitung Objek</span>
+                            <span class="text-[10px] sm:text-sm opacity-95 font-semibold block bg-black/20 rounded-lg px-2 py-1 inline-block">Jodohkan gambar</span>
+                        </div>
+                        <span class="text-4xl sm:text-5xl group-hover:scale-110 transition-transform ml-2">🍊</span>
+                    </button>
+                    
+                    <!-- Game 3 -->
+                    <button onclick="selectMode('writeLetter')" class="group bg-gradient-to-r from-teal-400 to-emerald-500 hover:from-teal-500 hover:to-emerald-600 text-white p-3 sm:p-4 rounded-3xl shadow-[0_6px_0_#047857] active:translate-y-2 active:shadow-none transition-all flex items-center justify-between border-2 border-teal-300">
+                        <div class="text-left flex-1">
+                            <span class="block font-extrabold text-base sm:text-xl mb-1">✍️ Tulis Huruf</span>
+                            <span class="text-[10px] sm:text-sm opacity-95 font-semibold block bg-black/20 rounded-lg px-2 py-1 inline-block">Menulis huruf A - Z</span>
+                        </div>
+                        <span class="text-4xl sm:text-5xl group-hover:scale-110 transition-transform ml-2">🅰️</span>
+                    </button>
+
+                    <!-- Game 4 -->
+                    <button onclick="selectMode('writeNumber')" class="group bg-gradient-to-r from-blue-400 to-cyan-500 hover:from-blue-500 hover:to-cyan-600 text-white p-3 sm:p-4 rounded-3xl shadow-[0_6px_0_#0284c7] active:translate-y-2 active:shadow-none transition-all flex items-center justify-between border-2 border-blue-300">
+                        <div class="text-left flex-1">
+                            <span class="block font-extrabold text-base sm:text-xl mb-1">✍️ Tulis Angka</span>
+                            <span class="text-[10px] sm:text-sm opacity-95 font-semibold block bg-black/20 rounded-lg px-2 py-1 inline-block">Menulis angka 0 - 9</span>
+                        </div>
+                        <span class="text-4xl sm:text-5xl group-hover:scale-110 transition-transform ml-2">1️⃣</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Leaderboard (Skor Terbaik) -->
+        <div id="modalLeaderboard" class="fixed inset-0 bg-black/70 backdrop-blur-md hidden items-center justify-center z-[1000000] p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-3xl p-5 sm:p-8 max-w-lg w-full shadow-2xl pop-in text-center border-8 border-yellow-400 relative">
+                <button onclick="closeLeaderboard()" class="absolute top-2 right-4 text-4xl font-bold text-gray-400 hover:text-red-500">&times;</button>
+                <span class="text-5xl mb-2 block animate-bounce">🏆</span>
+                <h2 class="text-xl sm:text-3xl font-extrabold mb-4 text-indigo-700 dark:text-indigo-300">Papan Skor Terbaik</h2>
+                
+                <!-- Menu Tab Kategori Game di Leaderboard -->
+                <div class="flex gap-1 mb-4 bg-gray-100 dark:bg-gray-700 p-1.5 rounded-full text-xs sm:text-sm scroll-container overflow-x-auto whitespace-nowrap">
+                    <button onclick="showLeaderboardTab('match')" id="tabLMatch" class="px-3 py-1.5 rounded-full font-bold bg-indigo-500 text-white shadow-sm">🧩 Cocok</button>
+                    <button onclick="showLeaderboardTab('countImage')" id="tabLCount" class="px-3 py-1.5 rounded-full font-bold text-gray-600 dark:text-gray-300">🔢 Hitung</button>
+                    <button onclick="showLeaderboardTab('writeLetter')" id="tabLWriteL" class="px-3 py-1.5 rounded-full font-bold text-gray-600 dark:text-gray-300">🅰️ Huruf</button>
+                    <button onclick="showLeaderboardTab('writeNumber')" id="tabLWriteN" class="px-3 py-1.5 rounded-full font-bold text-gray-600 dark:text-gray-300">1️⃣ Angka</button>
+                </div>
+
+                <!-- Konten List Leaderboard -->
+                <div class="bg-gray-50 dark:bg-gray-900 rounded-2xl p-4 min-h-[180px] flex flex-col justify-center relative">
+                    <!-- Overlay Indikator Loading untuk Data Cloud -->
+                    <div id="leaderboardLoading" class="absolute inset-0 bg-white/80 dark:bg-gray-900/80 rounded-2xl flex items-center justify-center font-bold text-indigo-600 dark:text-yellow-400 hidden">
+                        <span class="animate-bounce">Memuat Skor Permanen... ⏳</span>
                     </div>
-                    <span class="text-4xl sm:text-5xl group-hover:scale-110 transition-transform ml-2">1️⃣</span>
+                    <ul id="leaderboardList" class="space-y-2 text-left font-bold text-sm sm:text-base w-full h-full">
+                        <!-- Items rendered by JS -->
+                    </ul>
+                </div>
+
+                <button onclick="closeLeaderboard()" class="mt-6 w-full bg-gradient-to-b from-indigo-500 to-indigo-600 text-white font-extrabold py-3 rounded-2xl shadow-[0_4px_0_#3730a3] active:translate-y-1 active:shadow-none transition-all text-lg">Mengerti! 👍</button>
+            </div>
+        </div>
+
+        <!-- Modal Petunjuk Permainan -->
+        <div id="modalInstructions" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[1000000] p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl pop-in text-left border-8 border-blue-400 relative overflow-hidden">
+                <button onclick="closeInstructions()" class="absolute top-3 right-5 text-4xl font-bold text-gray-400 hover:text-red-500">&times;</button>
+                <h2 class="text-2xl sm:text-3xl font-extrabold mb-4 text-blue-600 dark:text-blue-400 text-center">📖 Petunjuk Main</h2>
+                <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 text-gray-700 dark:text-gray-300 text-sm sm:text-base font-medium scroll-container">
+                    <div class="bg-blue-50 dark:bg-gray-700 p-3 rounded-xl border-l-4 border-pink-400">
+                        <strong class="text-pink-600 dark:text-pink-400 text-lg">🧩 Cocokkan Simbol</strong><br>
+                        Tarik (drag) kotak dari bawah, lalu pasangkan (drop) ke kotak atas yang huruf atau angkanya sama persis.
+                    </div>
+                    <div class="bg-blue-50 dark:bg-gray-700 p-3 rounded-xl border-l-4 border-yellow-400">
+                        <strong class="text-yellow-600 dark:text-yellow-400 text-lg">🔢 Hitung Objek</strong><br>
+                        Hitung jumlah gambar objek di kotak atas, kemudian cari dan tarik angka yang tepat dari kumpulan kotak di bawah.
+                    </div>
+                    <div class="bg-blue-50 dark:bg-gray-700 p-3 rounded-xl border-l-4 border-teal-400">
+                        <strong class="text-teal-600 dark:text-teal-400 text-lg">✍️ Belajar Menulis</strong><br>
+                        Goreskan jarimu mengikuti titik-titik garis abu-abu untuk belajar menulis. Tekan <span class="bg-green-500 text-white px-1 rounded">👍 Selesai</span> untuk mengecek, atau <span class="bg-red-400 text-white px-1 rounded">🧹 Hapus</span> untuk mengulang.
+                    </div>
+                    <div class="bg-blue-50 dark:bg-gray-700 p-3 rounded-xl border-l-4 border-indigo-400">
+                        <strong class="text-indigo-600 dark:text-indigo-400 text-lg">⚠️ Nyawa &amp; Skor</strong><br>
+                        Setiap pemain dibekali 3 Nyawa ❤️. Kesalahan mencocokkan atau bentuk melenceng saat menulis akan mengurangi 1 Nyawa. Game Over saat Nyawa habis! Skor akan diakumulasi terus selama Nyawa masih ada.
+                    </div>
+                </div>
+                <button onclick="closeInstructions()" class="mt-6 w-full bg-gradient-to-b from-blue-400 to-blue-500 text-white font-extrabold py-3 rounded-2xl shadow-[0_5px_0_#1d4ed8] active:translate-y-2 active:shadow-none transition-all text-lg">Mengerti! 👍</button>
+            </div>
+        </div>
+
+        <!-- Modal Settings -->
+        <div id="modalSettings" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden items-center justify-center z-[999] p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-3xl p-5 sm:p-6 md:p-8 max-w-sm w-full shadow-2xl pop-in transform text-center border-8 border-indigo-100 dark:border-indigo-900 max-h-[90vh] overflow-y-auto scroll-container">
+                <span class="text-4xl sm:text-6xl mb-2 block">⚙️</span>
+                <h2 class="text-lg sm:text-xl font-extrabold mb-3 text-indigo-600 dark:text-indigo-400">Pilih Tipe Game (Cocokkan)</h2>
+                <div class="flex gap-2 mb-4">
+                    <button id="btnModeAlfabet" onclick="setSubMode('alfabet')" class="flex-1 bg-purple-500 text-white font-extrabold py-2 rounded-2xl shadow-[0_4px_0_#6b21a8] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-base border-4 border-purple-300">Alfabet</button>
+                    <button id="btnModeAngka" onclick="setSubMode('angka')" class="flex-1 bg-blue-400 text-white font-extrabold py-2 rounded-2xl shadow-[0_4px_0_#2563eb] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-base border-4 border-transparent opacity-60">Angka</button>
+                </div>
+
+                <h2 class="text-lg sm:text-xl font-extrabold mb-3 text-indigo-600 dark:text-indigo-400">Tingkat Kesulitan</h2>
+                <div class="flex flex-col gap-2 mb-6">
+                    <button id="btnLevelMudah" onclick="setLevel('mudah')" class="level-btn bg-green-400 text-white font-extrabold py-2 rounded-2xl shadow-[0_4px_0_#16a34a] active:translate-y-1 active:shadow-none transition-all text-xs sm:text-sm">Mudah (3 Item)</button>
+                    <button id="btnLevelSedang" onclick="setLevel('sedang')" class="level-btn bg-yellow-400 text-white font-extrabold py-2 rounded-2xl shadow-[0_4px_0_#ca8a04] active:translate-y-1 active:shadow-none transition-all text-xs sm:text-sm">Sedang (6 Item)</button>
+                    <button id="btnLevelSulit" onclick="setLevel('sulit')" class="level-btn bg-red-400 text-white font-extrabold py-2 rounded-2xl shadow-[0_4px_0_#dc2626] active:translate-y-1 active:shadow-none transition-all text-xs sm:text-sm">Sulit (9 Item)</button>
+                </div>
+
+                <!-- INTEGRASI DATABASE GOOGLE SHEETS -->
+                <div class="border-t-2 border-indigo-100 dark:border-indigo-900 pt-4 text-left">
+                    <h3 class="text-sm font-extrabold text-indigo-700 dark:text-indigo-300 mb-2">☁️ Google Sheets API (Opsional)</h3>
+                    <input type="text" id="inputGasUrl" placeholder="Tempel URL Web App dari Apps Script..." class="w-full px-3 py-2 text-xs rounded-xl border-2 border-indigo-200 outline-none focus:border-indigo-500 font-semibold dark:text-gray-800">
+                    <p class="text-[10px] text-gray-400 mt-1">Kosongkan kolom ini jika ingin bermain offline (menyimpan data di HP).</p>
+                </div>
+                
+                <button onclick="closeSettings()" class="mt-6 w-full text-gray-600 dark:text-gray-200 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 font-extrabold py-3 rounded-2xl transition-colors text-base sm:text-lg">Tutup &amp; Simpan</button>
+            </div>
+        </div>
+
+        <!-- Modal Coba Lagi (Menulis Salah) -->
+        <div id="modalTryAgain" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[1000] p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl pop-in text-center border-8 border-orange-400">
+                <span class="text-5xl sm:text-6xl mb-3 block animate-bounce">✏️</span>
+                <h2 class="text-xl sm:text-2xl font-extrabold mb-2 text-orange-500 dark:text-orange-400">Ayo Coba Lagi!</h2>
+                <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-6 font-bold">
+                    Bentuk tulisanmu belum pas nih. Yuk ikuti garis abu-abu putus-putusnya dengan lebih teliti ya! 💪
+                </p>
+                <button onclick="closeTryAgain()" class="w-full bg-gradient-to-b from-orange-400 to-orange-500 text-white font-extrabold text-lg sm:text-xl py-3 rounded-2xl shadow-[0_5px_0_#c2410c] active:translate-y-2 active:shadow-none transition-all">
+                    Coba Lagi 🖍️
                 </button>
             </div>
         </div>
-    </div>
 
-    <!-- Modal Settings (Hanya untuk Mode Cocokkan) -->
-    <div id="modalSettings" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden items-center justify-center z-[999] p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-3xl p-5 sm:p-8 max-w-sm w-full shadow-2xl pop-in transform text-center border-8 border-indigo-100 dark:border-indigo-900">
-            <span class="text-4xl sm:text-6xl mb-2 block">⚙️</span>
-            
-            <h2 class="text-lg sm:text-2xl font-extrabold mb-3 text-indigo-600 dark:text-indigo-400">Pilih Tipe Game</h2>
-            <div class="flex gap-2 mb-4 sm:mb-6">
-                <button id="btnModeAlfabet" onclick="setSubMode('alfabet')" class="flex-1 bg-purple-500 text-white font-extrabold py-2 sm:py-3 rounded-2xl shadow-[0_4px_0_#6b21a8] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-xl border-4 border-purple-300">Alfabet</button>
-                <button id="btnModeAngka" onclick="setSubMode('angka')" class="flex-1 bg-blue-400 text-white font-extrabold py-2 sm:py-3 rounded-2xl shadow-[0_4px_0_#2563eb] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-xl border-4 border-transparent opacity-60">Angka</button>
-            </div>
-
-            <h2 class="text-lg sm:text-2xl font-extrabold mb-3 text-indigo-600 dark:text-indigo-400">Tingkat Kesulitan</h2>
-            <div class="flex flex-col gap-2 sm:gap-4">
-                <button id="btnLevelMudah" onclick="setLevel('mudah')" class="level-btn bg-green-400 text-white font-extrabold py-2 sm:py-3 rounded-2xl shadow-[0_4px_0_#16a34a] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-xl">Mudah (3 Item)</button>
-                <button id="btnLevelSedang" onclick="setLevel('sedang')" class="level-btn bg-yellow-400 text-white font-extrabold py-2 sm:py-3 rounded-2xl shadow-[0_4px_0_#ca8a04] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-xl">Sedang (6 Item)</button>
-                <button id="btnLevelSulit" onclick="setLevel('sulit')" class="level-btn bg-red-400 text-white font-extrabold py-2 sm:py-3 rounded-2xl shadow-[0_4px_0_#dc2626] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-xl">Sulit (9 Item)</button>
-            </div>
-            
-            <button onclick="closeSettings()" class="mt-4 sm:mt-6 w-full text-gray-600 dark:text-gray-200 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 font-extrabold py-3 rounded-2xl transition-colors text-base sm:text-lg">Tutup & Mainkan</button>
-        </div>
-    </div>
-
-    <!-- Modal Coba Lagi (Menulis Salah) -->
-    <div id="modalTryAgain" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[1000] p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl pop-in text-center border-8 border-orange-400">
-            <span class="text-5xl sm:text-6xl mb-3 block animate-bounce">✏️</span>
-            <h2 class="text-xl sm:text-2xl font-extrabold mb-2 text-orange-500 dark:text-orange-400">Ayo Coba Lagi!</h2>
-            <p class="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-6 font-bold">
-                Bentuk tulisanmu belum pas nih. Yuk ikuti garis abu-abu putus-putusnya dengan lebih teliti ya! 💪
-            </p>
-            <button onclick="closeTryAgain()" class="w-full bg-gradient-to-b from-orange-400 to-orange-500 text-white font-extrabold text-lg sm:text-xl py-3 rounded-2xl shadow-[0_5px_0_#c2410c] active:translate-y-2 active:shadow-none transition-all">
-                Coba Lagi 🖍️
-            </button>
-        </div>
-    </div>
-
-    <!-- Modal Win / Berhasil -->
-    <div id="modalWin" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[999] p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-[2rem] p-6 sm:p-8 max-w-md w-full shadow-2xl pop-in text-center relative overflow-hidden border-8 border-yellow-400">
-            <span class="text-6xl sm:text-8xl mb-3 block animate-bounce">🏆</span>
-            <h2 class="text-3xl sm:text-5xl font-extrabold mb-2 text-yellow-500 drop-shadow-sm">Luar Biasa!</h2>
-            <p id="winMessageText" class="text-sm sm:text-lg text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 font-bold bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-xl inline-block">Kamu berhasil menyelesaikan latihan!</p>
-            
-            <div id="scoreWrapperWin" class="bg-indigo-100 dark:bg-indigo-900 rounded-3xl p-3 sm:p-5 mb-6 inline-block w-40 sm:w-56 shadow-inner border-4 border-indigo-200 dark:border-indigo-700">
-                <p class="text-xs sm:text-base font-extrabold text-indigo-500 dark:text-indigo-300 mb-1 uppercase tracking-widest">Skor Akhir</p>
-                <p id="finalScore" class="text-4xl sm:text-7xl font-black text-indigo-700 dark:text-indigo-200 drop-shadow-md">0</p>
-            </div>
-            
-            <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center relative z-10 w-full">
-                <button id="btnPlayAgain" onclick="restartOrNext()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-extrabold py-3 sm:py-4 px-4 sm:px-6 rounded-2xl shadow-[0_5px_0_#1d4ed8] active:translate-y-2 active:shadow-none transition-all text-lg sm:text-xl">Main Lagi</button>
-                <button id="btnChangeLvlWin" onclick="openModeSelector()" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-extrabold py-3 sm:py-4 px-4 sm:px-6 rounded-2xl shadow-[0_5px_0_#6b21a8] active:translate-y-2 active:shadow-none transition-all text-lg sm:text-xl">Pilih Game</button>
+        <!-- Modal Win / Berhasil (Untuk Mode Cocokkan & Hitung Gambar) -->
+        <div id="modalWin" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-[999] p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-[2rem] p-6 sm:p-8 max-w-md w-full shadow-2xl pop-in text-center relative overflow-hidden border-8 border-yellow-400">
+                <span class="text-6xl sm:text-8xl mb-3 block animate-bounce">🏆</span>
+                <h2 class="text-3xl sm:text-5xl font-extrabold mb-2 text-yellow-500 drop-shadow-sm">Sempurna!</h2>
+                <p id="winMessageText" class="text-sm sm:text-lg text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 font-bold bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-xl inline-block">Kamu berhasil menyelesaikan latihan!</p>
+                
+                <div id="scoreWrapperWin" class="bg-indigo-100 dark:bg-indigo-900 rounded-3xl p-3 sm:p-5 mb-6 inline-block w-40 sm:w-56 shadow-inner border-4 border-indigo-200 dark:border-indigo-700">
+                    <p class="text-xs sm:text-base font-extrabold text-indigo-500 dark:text-indigo-300 mb-1 uppercase tracking-widest">Skor Sementara</p>
+                    <p id="finalScore" class="text-4xl sm:text-7xl font-black text-indigo-700 dark:text-indigo-200 drop-shadow-md">0</p>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center relative z-10 w-full">
+                    <button id="btnPlayAgain" onclick="restartOrNext()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-extrabold py-3 sm:py-4 px-4 sm:px-6 rounded-2xl shadow-[0_5px_0_#1d4ed8] active:translate-y-2 active:shadow-none transition-all text-lg sm:text-xl">Lanjutkan Main! ➔</button>
+                    <button id="btnChangeLvlWin" onclick="openModeSelector()" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-extrabold py-3 sm:py-4 px-4 sm:px-6 rounded-2xl shadow-[0_5px_0_#6b21a8] active:translate-y-2 active:shadow-none transition-all text-lg sm:text-xl">Ganti Game</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Canvas Confetti -->
-    <canvas id="confetti-canvas"></canvas>
+        <!-- Modal Game Over / Kehabisan Nyawa -->
+        <div id="modalGameOver" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-[9999] p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-[2rem] p-6 sm:p-8 max-w-md w-full shadow-2xl pop-in text-center border-8 border-red-500 relative overflow-hidden">
+                <span class="text-6xl sm:text-8xl mb-3 block animate-bounce">💔</span>
+                <h2 class="text-3xl sm:text-5xl font-extrabold mb-2 text-red-500 drop-shadow-sm">Kesempatan Habis!</h2>
+                <p class="text-sm sm:text-lg text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 font-bold bg-red-50 dark:bg-red-950/40 px-4 py-2 rounded-xl inline-block">Jangan menyerah ya, yuk berlatih lagi!</p>
+                
+                <div class="bg-indigo-100 dark:bg-indigo-900 rounded-3xl p-3 sm:p-5 mb-6 inline-block w-40 sm:w-56 shadow-inner border-4 border-indigo-200 dark:border-indigo-700">
+                    <p class="text-xs sm:text-base font-extrabold text-indigo-500 dark:text-indigo-300 mb-1 uppercase tracking-widest">Skor Akhir</p>
+                    <p id="gameOverFinalScore" class="text-4xl sm:text-7xl font-black text-indigo-700 dark:text-indigo-200 drop-shadow-md">0</p>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center relative z-10 w-full">
+                    <button onclick="retryCurrentGameMode()" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-extrabold py-3 sm:py-4 px-4 sm:px-6 rounded-2xl shadow-[0_5px_0_#15803d] active:translate-y-2 active:shadow-none transition-all text-lg sm:text-xl">Main Lagi</button>
+                    <button onclick="openModeSelector()" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-extrabold py-3 sm:py-4 px-4 sm:px-6 rounded-2xl shadow-[0_5px_0_#6b21a8] active:translate-y-2 active:shadow-none transition-all text-lg sm:text-xl">Ganti Game</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas Confetti -->
+        <canvas id="confetti-canvas"></canvas>
+
+    </div>
 
     <script>
         // Data Global
@@ -407,49 +551,209 @@
         const countNumbersList = "123456789".split("");  
         const emojisList = ["🍊", "🍎", "🍓", "🍌", "⭐", "🎈", "🍭", "🍇", "🍒", "⚽"];
         
-        let activeGameMode = '';   
-        let writeSubMode = '';     
-        let subMode = 'alfabet';   
+        // Status Pemain & Game
+        let playerName = '';
+        let playerClass = '';
+        let playerSchool = '';
+
+        let activeGameMode = '';   // 'match', 'countImage', 'write'
+        let writeSubMode = '';     // 'alfabet' atau 'angka'
+        let subMode = 'alfabet';   // Untuk mode cocokkan ('alfabet' atau 'angka')
         let currentLevel = 'mudah';
         
         let currentPairs = [];
         let score = 0;
         let matchedCount = 0;
+        let lives = 3;
         
         let isSoundEnabled = true;
         let isDarkMode = false;
         let currentWriteIndex = 0;
 
-        // FUNGSI LAYAR PENUH (FULLSCREEN API)
-        function openFullscreen() {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(err => console.log("Fullscreen ditolak: ", err));
-            } else if (elem.webkitRequestFullscreen) { /* Safari */
-                elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) { /* IE11 */
-                elem.msRequestFullscreen();
+        // Menyimpan URL Google Apps Script di memori lokal agar tidak perlu mengetik ulang
+        let gasWebappUrl = localStorage.getItem('game_edukasi_gas_url') || 'https://script.google.com/macros/s/AKfycbwFMO2VeZtDYgVBB3u4vMXptIQUcAN1Jho8gl0HIx292Rzb0TMjtAug9iC4i9xlsu6I/exec';
+
+        // Fungsi Pembantu Pengacakan Array
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Leaderboard Data (Di-load dari localStorage jika ada)
+        let leaderboards = {
+            match: [],
+            countImage: [],
+            writeLetter: [],
+            writeNumber: []
+        };
+        
+        // Memuat database leaderboard dari penyimpanan lokal
+        function loadLeaderboards() {
+            const data = localStorage.getItem('game_edukasi_leaderboard');
+            if (data) {
+                leaderboards = JSON.parse(data);
+            } else {
+                // Seed data default yang lucu agar papan skor tidak kosong sepi
+                leaderboards.match = [
+                    { name: 'Kaka', class: '1-A', school: 'SD Mulia', score: 120 },
+                    { name: 'Naya', class: '2-B', school: 'SD Indah', score: 90 }
+                ];
+                leaderboards.countImage = [
+                    { name: 'Bimo', class: '1-C', school: 'SD Bintang', score: 105 },
+                    { name: 'Alya', class: '1-A', school: 'SD Mulia', score: 75 }
+                ];
+                leaderboards.writeLetter = [
+                    { name: 'Rian', class: 'TK-B', school: 'TK Sayang', score: 150 }
+                ];
+                leaderboards.writeNumber = [
+                    { name: 'Sisil', class: 'TK-A', school: 'TK Kasih', score: 130 }
+                ];
+                saveLeaderboards();
             }
         }
 
-        function closeFullscreen() {
-            if (document.exitFullscreen) {
-                document.exitFullscreen().catch(err => console.log(err));
-            } else if (document.webkitExitFullscreen) { 
-                document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) { 
-                document.msExitFullscreen();
-            }
+        function saveLeaderboards() {
+            localStorage.setItem('game_edukasi_leaderboard', JSON.stringify(leaderboards));
         }
 
-        // FUNGSI KELUAR
-        function exitGame() {
+        // Memasukkan atau memperbarui pencapaian ke papan leaderboard
+        function updateLeaderboard(gameKey, name, playerClass, school, scoreVal) {
+            if (!name || name.trim() === '') name = 'Anonim';
+            const pClass = playerClass || '-';
+            const pSchool = school || '-';
+            
+            if (!leaderboards[gameKey]) {
+                leaderboards[gameKey] = [];
+            }
+            
+            // --- SYNC DENGAN GOOGLE SHEETS CLOUD (Jika URL Apps Script Dikonfigurasi) ---
+            if (gasWebappUrl && gasWebappUrl.trim() !== '') {
+                const payload = {
+                    name: name,
+                    class: pClass,
+                    school: pSchool,
+                    gameMode: gameKey,
+                    score: scoreVal
+                };
+                
+                // Kirim secara non-blocking agar game tidak lag
+                fetch(gasWebappUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', // Mode no-cors penting agar tidak terblokir preflight CORS peramban
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(err => console.log("Gagal menyinkronkan data ke Google Sheets: ", err));
+            }
+            
+            // --- PENYIMPANAN CADANGAN SECARA LOKAL ---
+            const existingIndex = leaderboards[gameKey].findIndex(
+                entry => entry.name === name && entry.class === pClass && entry.school === pSchool
+            );
+            
+            if (existingIndex !== -1) {
+                if (scoreVal > leaderboards[gameKey][existingIndex].score) {
+                    leaderboards[gameKey][existingIndex].score = scoreVal;
+                }
+            } else {
+                const newEntry = { name, class: pClass, school: pSchool, score: scoreVal };
+                leaderboards[gameKey].push(newEntry);
+            }
+            
+            leaderboards[gameKey].sort((a, b) => b.score - a.score);
+            leaderboards[gameKey] = leaderboards[gameKey].slice(0, 5);
+            saveLeaderboards();
+        }
+
+        // Render data leaderboard ke dalam layar Modal Papan Skor
+        let activeLeaderboardTab = 'match';
+        function showLeaderboardTab(tabKey) {
+            activeLeaderboardTab = tabKey;
             playSound('click');
-            closeFullscreen();
-            const splash = document.getElementById('splashScreen');
-            splash.style.display = 'flex';
-            setTimeout(() => { splash.classList.remove('hide'); }, 10);
-            window.speechSynthesis.cancel();
+
+            const tabs = {
+                match: 'tabLMatch',
+                countImage: 'tabLCount',
+                writeLetter: 'tabLWriteL',
+                writeNumber: 'tabLWriteN'
+            };
+
+            for (const key in tabs) {
+                const btn = document.getElementById(tabs[key]);
+                if (key === tabKey) {
+                    btn.className = "px-3 py-1.5 rounded-full font-bold bg-indigo-500 text-white shadow-sm";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-full font-bold text-gray-600 dark:text-gray-300";
+                }
+            }
+
+            const listEl = document.getElementById('leaderboardList');
+            const loadingOverlay = document.getElementById('leaderboardLoading');
+            listEl.innerHTML = '';
+
+            // --- JIKA TERHUBUNG GOOGLE SHEETS: AMBIL DATA CLOUD ---
+            if (gasWebappUrl && gasWebappUrl.trim() !== '') {
+                loadingOverlay.classList.remove('hidden'); // Tampilkan tulisan loading
+                
+                fetch(gasWebappUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        loadingOverlay.classList.add('hidden'); // Sembunyikan loading
+                        
+                        // Saring data berdasarkan mode permainan saat ini
+                        const filtered = data.filter(item => item.gamemode === tabKey);
+                        // Urutkan skor tertinggi
+                        filtered.sort((a, b) => b.score - a.score);
+                        
+                        renderLeaderboardList(filtered.slice(0, 5));
+                    })
+                    .catch(err => {
+                        console.log("Gagal memuat dari Cloud Sheets, beralih ke Lokal: ", err);
+                        loadingOverlay.classList.add('hidden');
+                        // Fallback mengambil dari memori lokal jika koneksi gagal
+                        renderLeaderboardList(leaderboards[tabKey] || []);
+                    });
+            } else {
+                // Bermain Offline: Ambil dari penyimpanan lokal perangkat langsung
+                renderLeaderboardList(leaderboards[tabKey] || []);
+            }
+        }
+
+        // Fungsi menggambar item list leaderboard
+        function renderLeaderboardList(entries) {
+            const listEl = document.getElementById('leaderboardList');
+            listEl.innerHTML = '';
+            
+            if (entries.length === 0) {
+                listEl.innerHTML = `<li class="text-center text-gray-400 py-10">Belum ada skor tercatat.</li>`;
+                return;
+            }
+
+            entries.forEach((item, index) => {
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '⭐';
+                const li = document.createElement('li');
+                li.className = "flex justify-between items-center bg-indigo-50/50 dark:bg-gray-700 p-2 sm:p-3 rounded-xl border border-indigo-100 dark:border-indigo-900 pop-in w-full";
+                li.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg sm:text-2xl">${medal}</span>
+                        <div>
+                            <span class="font-extrabold text-indigo-900 dark:text-indigo-200 text-xs sm:text-base">${item.name}</span>
+                            <span class="text-[10px] text-gray-400 block">${item.school} (${item.class})</span>
+                        </div>
+                    </div>
+                    <span class="text-lg sm:text-xl font-black text-indigo-600 dark:text-yellow-400">${item.score}</span>
+                `;
+                listEl.appendChild(li);
+            });
+        }
+
+        function closeLeaderboard() {
+            playSound('click');
+            document.getElementById('modalLeaderboard').classList.add('hidden');
+            document.getElementById('modalLeaderboard').classList.remove('flex');
         }
 
         // OFFSCREEN CANVAS (Menulis Piksel)
@@ -461,18 +765,71 @@
         offscreenUser.width = 64; offscreenUser.height = 64;
         const oCtxU = offscreenUser.getContext('2d');
 
-        // Audio Setup
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        // LAYAR PENUH (FULLSCREEN API)
+        function openFullscreen() {
+            const container = document.getElementById('gameContainer');
+            if (container) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen().catch(err => console.log("Fullscreen ditolak: ", err));
+                } else if (container.webkitRequestFullscreen) { /* Safari */
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) { /* IE11 */
+                    container.msRequestFullscreen();
+                }
+            } else {
+                console.log("Elemen gameContainer tidak ditemukan.");
+            }
+        }
+
+        function closeFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(err => console.log(err));
+            } else if (document.webkitExitFullscreen) { 
+                document.webkitExitFullscreen();
+              } else if (document.msExitFullscreen) { 
+                document.msExitFullscreen();
+            }
+        }
+
+        // FUNGSI KELUAR (Skor diselamatkan otomatis ke leaderboard saat keluar)
+        function exitGame() {
+            playSound('click');
+            
+            // Amankan skor terakhir ke leaderboard sebelum berpindah layar
+            if (activeGameMode && score > 0) {
+                let gameKey = activeGameMode;
+                if (activeGameMode === 'write') {
+                    gameKey = writeSubMode === 'alfabet' ? 'writeLetter' : 'writeNumber';
+                }
+                updateLeaderboard(gameKey, playerName, playerClass, playerSchool, score);
+            }
+
+            closeFullscreen();
+            const splash = document.getElementById('splashScreen');
+            splash.style.display = 'flex';
+            setTimeout(() => { splash.classList.remove('hide'); }, 10);
+            window.speechSynthesis.cancel();
+        }
+
+        // Audio Setup (Penanganan lebih aman untuk mencegah tabrakan nama deklarasi global AudioContext)
         let audioCtx;
 
         function initAudio() {
-            if (!audioCtx) audioCtx = new AudioContext();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (!audioCtx) {
+                const SelectedCtx = window.AudioContext || window.webkitAudioContext;
+                if (SelectedCtx) {
+                    audioCtx = new SelectedCtx();
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
         }
 
         function playSound(type) {
             if (!isSoundEnabled) return;
             initAudio();
+            if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             osc.connect(gainNode);
@@ -506,29 +863,58 @@
             window.speechSynthesis.speak(msg);
         }
 
-        function shuffleArray(array) {
-            const arr = [...array];
-            for (let i = arr.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [arr[i], arr[j]] = [arr[j], arr[i]];
-            }
-            return arr;
-        }
-
         // --- SISTEM PEMILIH MODE ---
         function openModeSelector() {
             playSound('click');
             document.getElementById('modalWin').classList.add('hidden'); document.getElementById('modalWin').classList.remove('flex');
+            document.getElementById('modalGameOver').classList.add('hidden'); document.getElementById('modalGameOver').classList.remove('flex');
             document.getElementById('modalModeSelector').classList.remove('hidden'); document.getElementById('modalModeSelector').classList.add('flex');
         }
 
+        // PERBAIKAN: Jika menekan tanda X / Menutup Pop-up Mode, kembali ke bagian awal (Splash Screen)
         function closeModeSelector() {
-            document.getElementById('modalModeSelector').classList.add('hidden'); document.getElementById('modalModeSelector').classList.remove('flex');
-            if(!activeGameMode) selectMode('match');
+            playSound('click');
+            
+            document.getElementById('modalModeSelector').classList.add('hidden'); 
+            document.getElementById('modalModeSelector').classList.remove('flex');
+            
+            closeFullscreen();
+            const splash = document.getElementById('splashScreen');
+            splash.style.display = 'flex';
+            setTimeout(() => { splash.classList.remove('hide'); }, 10);
+            
+            window.speechSynthesis.cancel();
+            activeGameMode = '';
         }
 
         function selectMode(mode) {
+            const nameVal = document.getElementById('inputName').value;
+            const classVal = document.getElementById('inputClass').value;
+            const schoolVal = document.getElementById('inputSchool').value;
+
+            // Validasi identitas wajib diisi sebelum masuk mode game
+            if (!nameVal || nameVal.trim() === '') {
+                playSound('wrong');
+                speakText("Masukkan namamu dahulu ya!");
+                const inputEl = document.getElementById('inputName');
+                inputEl.focus();
+                inputEl.classList.add('border-red-500', 'animate-shake');
+                setTimeout(() => {
+                    inputEl.classList.remove('animate-shake');
+                }, 400);
+                return;
+            }
+
+            document.getElementById('inputName').classList.remove('border-red-500');
+            playerName = nameVal;
+            playerClass = classVal || '-';
+            playerSchool = schoolVal || '-';
+
+            document.getElementById('statusPlayerName').textContent = playerName;
+            document.getElementById('statusPlayerClass').textContent = playerClass;
+
             playSound('click');
+            activeGameMode = mode;
             document.getElementById('modalModeSelector').classList.add('hidden'); document.getElementById('modalModeSelector').classList.remove('flex');
 
             const playMatch = document.getElementById('gamePlayMatch');
@@ -536,6 +922,12 @@
             const scoreBox = document.getElementById('scoreBox');
             const settingsBtn = document.getElementById('btnSettings');
             const gameTitle = document.getElementById('gameTitle');
+
+            // Reset nyawa dan skor akumulasi saat ganti permainan baru
+            lives = 3;
+            score = 0;
+            updateLivesUI();
+            updateScoreDisplay();
 
             if (mode === 'match') {
                 activeGameMode = 'match';
@@ -557,7 +949,7 @@
                 gameTitle.textContent = "Menulis Huruf!";
                 playWrite.classList.remove('hidden'); playWrite.classList.add('flex');
                 playMatch.classList.add('hidden'); playMatch.classList.remove('flex');
-                scoreBox.style.visibility = 'hidden'; settingsBtn.style.display = 'none';
+                scoreBox.style.visibility = 'visible'; settingsBtn.style.display = 'none';
                 setTimeout(() => { initWritingGame(); }, 50);
             } else if (mode === 'writeNumber') {
                 activeGameMode = 'write'; writeSubMode = 'angka'; currentWriteIndex = 0;
@@ -565,7 +957,7 @@
                 gameTitle.textContent = "Menulis Angka!";
                 playWrite.classList.remove('hidden'); playWrite.classList.add('flex');
                 playMatch.classList.add('hidden'); playMatch.classList.remove('flex');
-                scoreBox.style.visibility = 'hidden'; settingsBtn.style.display = 'none';
+                scoreBox.style.visibility = 'visible'; settingsBtn.style.display = 'none';
                 setTimeout(() => { initWritingGame(); }, 50);
             }
         }
@@ -601,7 +993,6 @@
             const targetBoard = document.getElementById('targetBoard');
             const sourceBoard = document.getElementById('sourceBoard');
             
-            // Format papan agar full screen adaptif
             targetBoard.className = 'flex-1 flex flex-wrap justify-center items-center content-center gap-2 sm:gap-4 w-full h-full pb-2';
             sourceBoard.className = 'flex-1 flex flex-wrap justify-center items-center content-center gap-2 sm:gap-4 w-full h-full pb-2';
             
@@ -644,7 +1035,7 @@
             matchedCount = 0; score = 0; updateScoreDisplay();
             document.getElementById('modalWin').classList.add('hidden'); document.getElementById('modalWin').classList.remove('flex');
             
-            const selectedNumbers = shuffleArray(countNumbersList).slice(0, 4); // Cukup 4 angka agar ukuran kotak raksasa
+            const selectedNumbers = shuffleArray(countNumbersList).slice(0, 4); 
             const selectedEmoji = emojisList[Math.floor(Math.random() * emojisList.length)];
 
             currentPairs = selectedNumbers.map(num => {
@@ -668,7 +1059,6 @@
             const targetBoard = document.getElementById('targetBoard');
             const sourceBoard = document.getElementById('sourceBoard');
             
-            // Format khusus agar 4 item memakan ruang 2x2 secara penuh tanpa celah kosong berlebih
             targetBoard.className = 'flex-1 grid grid-cols-2 gap-2 sm:gap-4 w-full h-full pb-2';
             sourceBoard.className = 'flex-1 flex flex-wrap justify-center items-center content-center gap-3 sm:gap-5 w-full h-full pb-2';
             
@@ -684,8 +1074,8 @@
                 dropZone.dataset.targetId = pair.id;
                 
                 const count = parseInt(pair.id);
-                // Dynamically sizing emojis so large numbers fit
-                const textSize = count > 6 ? 'text-3xl sm:text-5xl lg:text-6xl' : 'text-4xl sm:text-6xl lg:text-7xl';
+                // Ukuran emoji disesuaikan agar selalu muat di dalam kotak secara rapi
+                const textSize = count > 6 ? 'text-2xl sm:text-4xl lg:text-5xl' : 'text-3xl sm:text-5xl lg:text-6xl';
                 
                 dropZone.innerHTML = `<span class="leading-none select-none pointer-events-none drop-shadow-sm flex flex-wrap justify-center items-center gap-1 sm:gap-2 ${textSize}">${pair.display}</span>`;
                 targetBoard.appendChild(dropZone);
@@ -694,7 +1084,6 @@
             // Draggable Angka
             shuffledSources.forEach((pair, index) => {
                 const dragContainer = document.createElement('div');
-                // Buat bentuk membulat besar
                 dragContainer.className = 'w-[25%] sm:w-[15%] aspect-square min-w-[60px] max-w-[120px] rounded-xl sm:rounded-2xl relative shrink-0';
 
                 const dragItem = document.createElement('div');
@@ -713,123 +1102,66 @@
             });
         }
 
-        // Logic Drag and Drop Interaktif
-        let dragInfo = { element: null, startX: 0, startY: 0, originalLeft: 0, originalTop: 0, rect: null };
+        // FUNGSI UTAMA UNTUK MENGURANGI NYAWA ❤️
+        function decreaseLife() {
+            lives--;
+            updateLivesUI();
+            playSound('wrong');
 
-        document.addEventListener('pointerdown', (e) => {
-            if (activeGameMode !== 'match' && activeGameMode !== 'countImage') return;
-            if (e.pointerType === 'mouse' && e.button !== 0) return;
-            const target = e.target.closest('.draggable');
-            if (!target) return;
-
-            e.preventDefault();
-            initAudio();
-            
-            const el = target;
-            dragInfo.element = el;
-            playSound('click');
-            speakText(el.textContent);
-
-            dragInfo.rect = el.getBoundingClientRect();
-            dragInfo.originalLeft = dragInfo.rect.left;
-            dragInfo.originalTop = dragInfo.rect.top;
-            dragInfo.startX = e.clientX;
-            dragInfo.startY = e.clientY;
-
-            el.style.position = 'fixed';
-            el.style.left = dragInfo.originalLeft + 'px';
-            el.style.top = dragInfo.originalTop + 'px';
-            el.style.width = dragInfo.rect.width + 'px';
-            el.style.height = dragInfo.rect.height + 'px';
-            el.style.margin = '0';
-            
-            document.body.appendChild(el);
-            el.classList.add('is-dragging');
-        }, {passive: false});
-
-        document.addEventListener('pointermove', (e) => {
-            if (!dragInfo.element) return;
-            e.preventDefault(); 
-            const dx = e.clientX - dragInfo.startX;
-            const dy = e.clientY - dragInfo.startY;
-            dragInfo.element.style.transform = `translate(${dx}px, ${dy}px) scale(1.15)`;
-        }, {passive: false});
-
-        document.addEventListener('pointerup', (e) => {
-            if (!dragInfo.element) return;
-
-            const el = dragInfo.element;
-            el.classList.remove('is-dragging');
-            el.style.display = 'none';
-            
-            const elemUnderFinger = document.elementFromPoint(e.clientX, e.clientY);
-            el.style.display = 'flex';
-            const dropZone = elemUnderFinger ? elemUnderFinger.closest('.drop-zone') : null;
-
-            if (dropZone && !dropZone.classList.contains('matched')) {
-                if (dropZone.dataset.targetId === el.dataset.sourceId) {
-                    handleCorrectMatch(el, dropZone);
-                } else {
-                    handleWrongMatch(el);
-                }
-            } else {
-                handleWrongMatch(el);
+            if (lives <= 0) {
+                handleGameOver();
             }
-            dragInfo.element = null;
-        });
-
-        function handleCorrectMatch(draggedEl, dropZone) {
-            draggedEl.remove();
-            dropZone.classList.add('matched', 'bg-green-400', 'border-green-500', 'text-white', 'shadow-lg');
-            dropZone.classList.remove('bg-white/60', 'dark:bg-gray-700/60', 'border-dashed', 'border-gray-300', 'dark:border-gray-500', 'text-gray-300', 'dark:text-gray-600', 'text-gray-400');
-            
-            if(activeGameMode === 'countImage') {
-                const targetNum = dropZone.dataset.targetId;
-                const pair = currentPairs.find(p => p.id === targetNum);
-                dropZone.innerHTML = `
-                    <div class="flex flex-col items-center justify-center leading-none h-full w-full">
-                        <span class="text-sm sm:text-3xl mb-1">${pair.display}</span>
-                        <span class="text-4xl sm:text-6xl font-extrabold text-white drop-shadow-md">${targetNum}</span>
-                    </div>`;
-            }
-
-            dropZone.classList.add('pop-in');
-            playSound('correct');
-            
-            score += 15; matchedCount++;
-            updateScoreDisplay();
-
-            const rect = dropZone.getBoundingClientRect();
-            shootConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
-
-            if (matchedCount === currentPairs.length) setTimeout(() => { showWinScreenMatch(); }, 800);
         }
 
-        function handleWrongMatch(draggedEl) {
-            playSound('wrong');
-            draggedEl.style.transition = 'transform 0.3s ease, left 0.3s ease, top 0.3s ease';
-            draggedEl.style.transform = 'scale(1)';
-            draggedEl.style.left = dragInfo.originalLeft + 'px';
-            draggedEl.style.top = dragInfo.originalTop + 'px';
-            draggedEl.classList.add('animate-shake');
+        // Mengatur tampilan nyawa (hati) secara dinamis
+        function updateLivesUI() {
+            for (let i = 1; i <= 3; i++) {
+                const heart = document.getElementById(`heart${i}`);
+                if (i <= lives) {
+                    heart.style.opacity = '1';
+                    heart.style.transform = 'scale(1)';
+                } else {
+                    heart.style.opacity = '0.2';
+                    heart.style.transform = 'scale(0.8)';
+                }
+            }
+        }
+
+        // MEMULAI KEMBALI MODE PERMAINAN SETELAH MATI (GAME OVER)
+        function retryCurrentGameMode() {
+            document.getElementById('modalGameOver').classList.add('hidden');
+            document.getElementById('modalGameOver').classList.remove('flex');
             
-            score = Math.max(0, score - 5);
+            // Setel ulang nyawa dan skor khusus mode baru ini
+            lives = 3;
+            score = 0;
+            updateLivesUI();
             updateScoreDisplay();
 
-            setTimeout(() => {
-                draggedEl.classList.remove('animate-shake');
-                draggedEl.style.position = 'absolute';
-                draggedEl.style.transition = 'transform 0.1s';
-                draggedEl.style.left = ''; draggedEl.style.top = '';
-                
-                const containers = document.querySelectorAll('#sourceBoard > div');
-                for (let container of containers) {
-                    if (container.children.length === 0) {
-                        container.appendChild(draggedEl);
-                        break;
-                    }
-                }
-            }, 300);
+            if (activeGameMode === 'match') {
+                startMatchGame();
+            } else if (activeGameMode === 'countImage') {
+                startCountImageGame();
+            } else if (activeGameMode === 'write') {
+                initWritingGame();
+            }
+        }
+
+        // PROSES MATI / KEHABISAN NYAWA (GAME OVER)
+        function handleGameOver() {
+            playSound('wrong');
+            
+            // Catat pencapaian ke Leaderboard
+            let gameKey = activeGameMode;
+            if (activeGameMode === 'write') {
+                gameKey = writeSubMode === 'alfabet' ? 'writeLetter' : 'writeNumber';
+            }
+            updateLeaderboard(gameKey, playerName, playerClass, playerSchool, score);
+
+            document.getElementById('gameOverFinalScore').textContent = score;
+            const modal = document.getElementById('modalGameOver');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
         }
 
         function updateScoreDisplay() {
@@ -886,8 +1218,8 @@
             
             writeCtx.save();
             writeCtx.font = `700 ${size * 0.75}px 'Fredoka', sans-serif`;
-            writeCtx.textAlign = 'center';
             writeCtx.textBaseline = 'middle';
+            writeCtx.textAlign = 'center';
             
             writeCtx.fillStyle = '#e5e7eb';
             writeCtx.fillText(symbol, size / 2, size / 2 + size * 0.05);
@@ -956,6 +1288,7 @@
             initWritingGame();
         }
 
+        // Melanjutkan ke halaman huruf/angka berikutnya
         function nextLetter(playSnd = true) {
             if(playSnd) playSound('click');
             const currentList = writeSubMode === 'alfabet' ? alphabets : digitsList;
@@ -991,6 +1324,7 @@
             writeCtx.strokeStyle = '#4f46e5';
         }
 
+        // Proses menggambar coretan
         function draw(e) {
             if (!isDrawing) return;
             e.preventDefault();
@@ -1029,12 +1363,27 @@
             const minCoverage = 0.38; const minPrecision = 0.42; 
 
             if (coverage >= minCoverage && precision >= minPrecision) {
-                playSound('correct'); speakText(`Hebat!`); 
+                // TULISAN BENAR - Skor Bertambah!
+                score += 25;
+                updateScoreDisplay();
+
+                playSound('correct'); 
+                speakText("Hebat!"); 
                 const rect = canvas.getBoundingClientRect();
                 shootConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                
+                // Simpan skor terbaru menulis ke dalam Leaderboard secara real-time
+                const gameKey = writeSubMode === 'alfabet' ? 'writeLetter' : 'writeNumber';
+                updateLeaderboard(gameKey, playerName, playerClass, playerSchool, score);
+                
+                // Berpindah ke huruf/angka berikutnya secara otomatis
                 setTimeout(() => { nextLetter(false); }, 1400); 
             } else {
-                playSound('wrong'); speakText("Bentuknya belum pas, ayo coba lagi ya!"); showTryAgainModal();
+                // TULISAN SALAH - Mengurangi Nyawa
+                decreaseLife(); 
+                if (lives > 0) {
+                    showTryAgainModal();
+                }
             }
         }
 
@@ -1053,7 +1402,37 @@
         canvas.addEventListener('mousedown', startDrawing); canvas.addEventListener('mousemove', draw); window.addEventListener('mouseup', stopDrawing);
         canvas.addEventListener('touchstart', startDrawing, { passive: false }); canvas.addEventListener('touchmove', draw, { passive: false }); window.addEventListener('touchend', stopDrawing);
 
-        // --- KONTROL MODAL KEMENANGAN ---
+        // --- SISTEM KONTROL PERTANDINGAN DRAG & DROP COCOKKAN ---
+        function handleCorrectMatch(draggedEl, dropZone) {
+            draggedEl.remove();
+            dropZone.classList.add('matched', 'bg-green-400', 'border-green-500', 'text-white', 'shadow-lg');
+            dropZone.classList.remove('bg-white/60', 'dark:bg-gray-700/60', 'border-dashed', 'border-gray-300', 'dark:border-gray-500', 'text-gray-300', 'dark:text-gray-600', 'text-gray-400');
+            
+            if(activeGameMode === 'countImage') {
+                const targetNum = dropZone.dataset.targetId;
+                const pair = currentPairs.find(p => p.id === targetNum);
+                dropZone.innerHTML = `
+                    <div class="flex flex-col items-center justify-center leading-none h-full w-full">
+                        <span class="text-sm sm:text-3xl mb-1">${pair.display}</span>
+                        <span class="text-4xl sm:text-6xl font-extrabold text-white drop-shadow-md">${targetNum}</span>
+                    </div>`;
+            }
+
+            dropZone.classList.add('pop-in');
+            playSound('correct');
+            
+            score += 15; matchedCount++;
+            updateScoreDisplay();
+
+            const rect = dropZone.getBoundingClientRect();
+            shootConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+            if (matchedCount === currentPairs.length) {
+                setTimeout(() => { showWinScreenMatch(); }, 800);
+            }
+        }
+
+        // --- KONTROL MODAL KEMENANGAN PUTARAN ---
         function showWinScreenMatch() {
             playSound('win');
             const finalScoreEl = document.getElementById('finalScore');
@@ -1065,6 +1444,10 @@
             } else if(activeGameMode === 'countImage') {
                 winMessageText.innerHTML = "Hebat! Kamu pintar sekali berhitung dan menjodohkan gambar!";
             }
+            
+            // Perbaikan: Catat dan masukkan skor saat ini ke dalam Leaderboard ketika menang babak
+            const gameKey = activeGameMode;
+            updateLeaderboard(gameKey, playerName, playerClass, playerSchool, score);
             
             const modal = document.getElementById('modalWin');
             modal.classList.remove('hidden'); modal.classList.add('flex');
@@ -1078,13 +1461,26 @@
 
         function openSettings() {
             playSound('click'); updateSettingsUI();
+            
+            // Masukkan nilai url terakhir yang tersimpan saat membuka modal pengaturan
+            document.getElementById('inputGasUrl').value = gasWebappUrl;
+            
             document.getElementById('modalSettings').classList.remove('hidden'); document.getElementById('modalSettings').classList.add('flex');
         }
 
         function closeSettings() {
             playSound('click');
+            
+            // Simpan input URL Web App ke localStorage
+            const enteredUrl = document.getElementById('inputGasUrl').value.trim();
+            gasWebappUrl = enteredUrl;
+            localStorage.setItem('game_edukasi_gas_url', enteredUrl);
+
             document.getElementById('modalSettings').classList.add('hidden'); document.getElementById('modalSettings').classList.remove('flex');
-            startMatchGame();
+            
+            if(activeGameMode === 'match') {
+                startMatchGame();
+            }
         }
 
         function setSubMode(mode) { subMode = mode; updateSettingsUI(); }
@@ -1117,17 +1513,40 @@
             e.target.textContent = isSoundEnabled ? '🔊' : '🔇'; e.target.classList.toggle('opacity-50', !isSoundEnabled); initAudio();
         });
         document.getElementById('btnTheme').addEventListener('click', (e) => {
-            isDarkMode = !isDarkMode; document.body.classList.toggle('dark-mode', isDarkMode); e.target.textContent = isDarkMode ? '☀️' : '🌙';
+            isDarkMode = !isDarkMode; 
+            document.body.classList.toggle('dark-mode', isDarkMode); 
+            document.getElementById('gameContainer').classList.toggle('dark-mode', isDarkMode);
+            e.target.textContent = isDarkMode ? '☀️' : '🌙';
             if (activeGameMode === 'write') initWritingGame(); 
         });
 
-        // Event listener utama untuk memulai & minta layar penuh
+        // MASUK & MAIN DARI SPLASH SCREEN DENGAN VALIDASI DATA
         document.getElementById('btnStartSplash').addEventListener('click', () => {
             initAudio(); 
             openFullscreen(); 
             document.getElementById('splashScreen').classList.add('hide');
             setTimeout(() => { document.getElementById('splashScreen').style.display = 'none'; }, 800);
             openModeSelector(); 
+        });
+
+        document.getElementById('btnInstructions').addEventListener('click', () => {
+            initAudio();
+            playSound('click');
+            document.getElementById('modalInstructions').classList.remove('hidden');
+            document.getElementById('modalInstructions').classList.add('flex');
+        });
+
+        function closeInstructions() {
+            playSound('click');
+            document.getElementById('modalInstructions').classList.add('hidden');
+            document.getElementById('modalInstructions').classList.remove('flex');
+        }
+
+        document.getElementById('btnOpenLeaderboard').addEventListener('click', () => {
+            initAudio();
+            document.getElementById('modalLeaderboard').classList.remove('hidden');
+            document.getElementById('modalLeaderboard').classList.add('flex');
+            showLeaderboardTab('match');
         });
 
         window.addEventListener('resize', () => {
@@ -1139,7 +1558,7 @@
         const canvasConfetti = document.getElementById('confetti-canvas');
         const ctx = canvasConfetti.getContext('2d');
         let particles = [];
-        function resizeCanvasConfetti() { canvasConfetti.width = window.innerWidth; canvasConfetti.height = window.innerHeight; }
+        function resizeCanvasConfetti() { canvasConfetti.width = canvasConfetti.parentElement.clientWidth; canvasConfetti.height = canvasConfetti.parentElement.clientHeight; }
         resizeCanvasConfetti();
         function shootConfetti(x, y) {
             const colors = ['#f87171', '#4ade80', '#facc15', '#60a5fa', '#c084fc', '#f472b6'];
@@ -1162,6 +1581,197 @@
             requestAnimationFrame(animateConfetti);
         }
         animateConfetti();
+
+        // --- SISTEM ANIMASI PARTIKEL LATAR BELAKANG SPLASH ---
+        function createSplashParticles() {
+            const container = document.getElementById('splashBgParticles');
+            if (!container) return;
+            const symbols = ["🅰️", "🅱️", "🅲", "1️⃣", "2️⃣", "3️⃣", "⭐", "🎈", "🚀", "🧸"];
+            
+            // Generasikan partikel instan yang sudah tersebar di berbagai ketinggian layar
+            for (let i = 0; i < 12; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'floating-splash-particle text-3xl sm:text-5xl';
+                particle.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                
+                particle.style.left = Math.random() * 100 + 'vw';
+                const duration = Math.random() * 8 + 8; // 8s s.d 16s
+                particle.style.animationDuration = duration + 's';
+                
+                // Menggunakan delay negatif agar partikel langsung tersebar di tengah layar saat di-load
+                const randomDelay = Math.random() * -duration;
+                particle.style.animationDelay = randomDelay + 's';
+                
+                container.appendChild(particle);
+                
+                setTimeout(() => {
+                    particle.remove();
+                }, (duration + randomDelay) * 1000);
+            }
+
+            // Terus buat partikel baru secara berkala
+            setInterval(() => {
+                const particle = document.createElement('div');
+                particle.className = 'floating-splash-particle text-3xl sm:text-5xl';
+                particle.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                
+                particle.style.left = Math.random() * 100 + 'vw';
+                
+                const duration = Math.random() * 8 + 8; 
+                container.appendChild(particle);
+                
+                setTimeout(() => {
+                    particle.remove();
+                }, duration * 1000);
+            }, 600);
+        }
+
+        // --- SISTEM DRAG & DROP YANG DISEMPURNAKAN (FULLSCREEN PROOF) ---
+        // Variabel melacak status tarikan saat ini
+        let dragInfo = { 
+            element: null, 
+            startX: 0, startY: 0, 
+            originalLeft: 0, originalTop: 0, 
+            rect: null,
+            lastX: 0,
+            lastY: 0
+        };
+
+        // Pointer Down: Menyiapkan elemen untuk ditarik
+        document.addEventListener('pointerdown', (e) => {
+            if (activeGameMode !== 'match' && activeGameMode !== 'countImage') return;
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            const target = e.target.closest('.draggable');
+            if (!target) return;
+
+            e.preventDefault();
+            initAudio();
+            
+            const el = target;
+            dragInfo.element = el;
+            
+            // Simpan koordinat awal penunjuk untuk HP cadangan
+            dragInfo.lastX = e.clientX;
+            dragInfo.lastY = e.clientY;
+            
+            playSound('click');
+            speakText(el.textContent);
+
+            // Ambil data dimensi elemen ditarik dan kontainer utama game
+            const gameContainer = document.getElementById('gameContainer');
+            const containerRect = gameContainer.getBoundingClientRect();
+            const rect = el.getBoundingClientRect();
+            dragInfo.rect = rect;
+
+            // Hitung koordinat awal yang relatif terhadap kontainer game
+            // Hal ini memecahkan masalah elemen melayang salah atau hilang saat mode fullscreen diaktifkan!
+            dragInfo.originalLeft = rect.left - containerRect.left;
+            dragInfo.originalTop = rect.top - containerRect.top;
+            
+            dragInfo.startX = e.clientX;
+            dragInfo.startY = e.clientY;
+
+            // Atur gaya agar melayang di dalam kontainer game (bukan document.body luar)
+            el.style.position = 'absolute';
+            el.style.left = dragInfo.originalLeft + 'px';
+            el.style.top = dragInfo.originalTop + 'px';
+            el.style.width = rect.width + 'px';
+            el.style.height = rect.height + 'px';
+            el.style.margin = '0';
+            el.style.transition = 'none'; // Matikan efek delay transisi instan agar pergerakan responsif 1:1
+
+            gameContainer.appendChild(el);
+            el.classList.add('is-dragging');
+        }, {passive: false});
+
+        // Pointer Move: Menyamakan letak elemen ditarik dengan kursor/jari secara responsif
+        document.addEventListener('pointermove', (e) => {
+            if (!dragInfo.element) return;
+            e.preventDefault(); 
+            
+            if (e.clientX !== undefined && e.clientX !== 0) {
+                dragInfo.lastX = e.clientX;
+                dragInfo.lastY = e.clientY;
+            }
+            
+            const dx = e.clientX - dragInfo.startX;
+            const dy = e.clientY - dragInfo.startY;
+            
+            dragInfo.element.style.transform = `translate(${dx}px, ${dy}px) scale(1.15)`;
+        }, {passive: false});
+
+        // Pointer Up: Melacak elemen target yang dijatuhi dan merespon pencocokan
+        document.addEventListener('pointerup', (e) => {
+            if (!dragInfo.element) return;
+
+            const el = dragInfo.element;
+            el.classList.remove('is-dragging');
+            el.style.display = 'none'; // Sembunyikan sebentar agar browser mendeteksi elemen di bawahnya
+            
+            // Dapatkan koordinat akhir lepas sentuhan (gunakan koordinat HP cadangan jika 0)
+            const clientX = (e.clientX !== undefined && e.clientX !== 0) ? e.clientX : dragInfo.lastX;
+            const clientY = (e.clientY !== undefined && e.clientY !== 0) ? e.clientY : dragInfo.lastY;
+            
+            const elemUnderFinger = document.elementFromPoint(clientX, clientY);
+            el.style.display = 'flex'; // Munculkan kembali setelah melacak
+            
+            const dropZone = elemUnderFinger ? elemUnderFinger.closest('.drop-zone') : null;
+
+            if (dropZone && !dropZone.classList.contains('matched')) {
+                if (dropZone.dataset.targetId === el.dataset.sourceId) {
+                    handleCorrectMatch(el, dropZone);
+                } else {
+                    handleWrongMatch(el);
+                }
+            } else {
+                handleWrongMatch(el);
+            }
+            dragInfo.element = null;
+        });
+
+        // Fungsi ketika peletakkan ditarik SALAH
+        function handleWrongMatch(draggedEl) {
+            decreaseLife(); // Kurangi nyawa ❤️
+            
+            // Tambahkan transisi animasi agar meluncur mulus kembali ke tempat asal
+            draggedEl.style.transition = 'transform 0.3s ease, left 0.3s ease, top 0.3s ease';
+            draggedEl.style.transform = 'scale(1)';
+            draggedEl.style.left = dragInfo.originalLeft + 'px';
+            draggedEl.style.top = dragInfo.originalTop + 'px';
+            draggedEl.classList.add('animate-shake');
+            
+            score = Math.max(0, score - 5);
+            updateScoreDisplay();
+
+            setTimeout(() => {
+                draggedEl.classList.remove('animate-shake');
+                draggedEl.style.position = 'absolute';
+                draggedEl.style.transition = ''; // Kembalikan transisi standard CSS
+                draggedEl.style.left = ''; 
+                draggedEl.style.top = '';
+                draggedEl.style.width = '';
+                draggedEl.style.height = '';
+                draggedEl.style.transform = '';
+                
+                // Cari slot kontainer aslinya yang kosong di source board lalu masukkan kembali
+                const containers = document.querySelectorAll('#sourceBoard > div');
+                for (let container of containers) {
+                    if (container.children.length === 0) {
+                        container.appendChild(draggedEl);
+                        break;
+                    }
+                }
+            }, 300);
+        }
+
+        // Load data inisial saat game pertama dibuka
+        window.onload = function() {
+            // Memastikan data leaderboard dari localStorage ter-load
+            if (typeof loadLeaderboards === 'function') {
+                loadLeaderboards();
+            }
+            createSplashParticles(); // Jalankan partikel latar belakang mengambang
+        }
     </script>
 </body>
 </html>
