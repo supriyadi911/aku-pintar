@@ -249,6 +249,11 @@
                             <span>🏆</span> <span>Leaderboard</span>
                         </button>
                     </div>
+
+                    <!-- Tombol Penjelasan Aplikasi -->
+                    <button id="btnOpenAbout" class="w-full py-2.5 font-bold text-xs sm:text-sm text-white rounded-2xl bg-teal-500 hover:bg-teal-600 shadow-md flex items-center justify-center gap-1.5 transition-all shrink-0">
+                        <span>💡</span> <span>Penjelasan Aplikasi</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -344,12 +349,16 @@
             </div>
         </main>
 
+        <!-- ============================================== -->
+        <!-- POPUP & MODAL                                  -->
+        <!-- ============================================== -->
+
         <!-- Modal Pilihan Jenis Permainan (Dilengkapi Form Identitas di Atas Kartu Mode) -->
         <div id="modalModeSelector" class="fixed inset-0 bg-black/70 backdrop-blur-md hidden items-center justify-center z-[999] p-4">
             <div class="bg-white dark:bg-gray-800 rounded-[2rem] p-5 sm:p-6 md:p-8 max-w-2xl w-full shadow-2xl pop-in text-center border-8 border-indigo-400 relative max-h-[90vh] overflow-y-auto scroll-container">
                 <button onclick="closeModeSelector()" class="absolute top-2 right-4 text-4xl font-bold text-gray-400 hover:text-red-500">&times;</button>
                 
-                <h2 class="text-xl sm:text-3xl font-extrabold mb-4 text-indigo-600 dark:text-indigo-400">Pilih Permainan! 🎈</h2>
+                <h2 class="text-xl sm:text-3xl font-extrabold mb-4 text-indigo-600 dark:text-indigo-400">Pilih Jenis Permainan! 🎈</h2>
                 
                 <!-- FORM PENDAFTARAN PEMAIN (Pindah ke Sini) -->
                 <div class="bg-indigo-50/80 dark:bg-gray-700/80 p-4 rounded-2xl w-full shadow-inner flex flex-col gap-2.5 border-2 border-indigo-200 dark:border-indigo-900 mb-6 shrink-0 text-left">
@@ -375,7 +384,7 @@
                     <!-- Game 2 -->
                     <button onclick="selectMode('countImage')" class="group bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white p-3 sm:p-4 rounded-3xl shadow-[0_6px_0_#b45309] active:translate-y-2 active:shadow-none transition-all flex items-center justify-between border-2 border-yellow-300">
                         <div class="text-left flex-1">
-                            <span class="block font-extrabold text-base sm:text-xl mb-1">🔢 Hitung Objek</span>
+                            <span class="block font-extrabold text-base sm:text-lg mb-1">🔢 Hitung Objek</span>
                             <span class="text-[10px] sm:text-sm opacity-95 font-semibold block bg-black/20 rounded-lg px-2 py-1 inline-block">Jodohkan gambar</span>
                         </div>
                         <span class="text-4xl sm:text-5xl group-hover:scale-110 transition-transform ml-2">🍊</span>
@@ -459,21 +468,58 @@
             </div>
         </div>
 
+        <!-- Modal Penjelasan Aplikasi -->
+        <div id="modalAbout" class="fixed inset-0 bg-black/70 backdrop-blur-md hidden items-center justify-center z-[1000000] p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl pop-in text-left border-8 border-teal-400 relative overflow-hidden">
+                <button onclick="closeAbout()" class="absolute top-3 right-5 text-4xl font-bold text-gray-400 hover:text-red-500">&times;</button>
+                <h2 class="text-2xl sm:text-3xl font-extrabold mb-4 text-teal-600 dark:text-teal-400 text-center">💡 Tentang Aplikasi</h2>
+                
+                <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 text-gray-700 dark:text-gray-300 text-xs sm:text-sm font-medium scroll-container">
+                    <p class="font-bold text-indigo-700 dark:text-indigo-400 text-sm sm:text-base text-center">
+                        "Game Edukasi Anak: Belajar Seru"
+                    </p>
+                    <p class="text-center text-xs sm:text-xs text-gray-500 dark:text-gray-400">
+                        Platform permainan interaktif yang dirancang untuk membantu anak-anak (PAUD hingga SD awal) mengenal huruf, angka, berhitung, dan menulis dengan asyik!
+                    </p>
+                    
+                    <div class="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+                    
+                    <h4 class="font-bold text-teal-600 dark:text-teal-400 text-sm">🎮 4 Mode Permainan Utama:</h4>
+                    <ul class="list-disc pl-5 space-y-1.5 text-xs">
+                        <li><strong>🧩 Cocokkan Simbol (Alfabet &amp; Angka):</strong> Melatih pengenalan visual dengan menarik balok ke tempat yang tepat.</li>
+                        <li><strong>🔢 Hitung Objek:</strong> Mengasah matematika dasar dengan mencocokkan jumlah gambar objek ceria dengan angka.</li>
+                        <li><strong>✍️ Tulis Huruf:</strong> Melatih motorik halus dengan menebalkan garis panduan huruf A hingga Z.</li>
+                        <li><strong>✍️ Tulis Angka:</strong> Belajar menulis angka 0 hingga 9 secara interaktif dengan deteksi keakuratan instan.</li>
+                    </ul>
+                    
+                    <h4 class="font-bold text-teal-600 dark:text-teal-400 text-sm">✨ Fitur Unggulan:</h4>
+                    <ul class="list-disc pl-5 space-y-1.5 text-xs">
+                        <li><strong>❤️ Nyawa &amp; Skor:</strong> Tantangan menyenangkan dengan 3 kesempatan bermain untuk memotivasi belajar anak.</li>
+                        <li><strong>☁️ Leaderboard Cloud:</strong> Sinkronisasi skor secara real-time langsung ke Google Sheets Anda!</li>
+                        <li><strong>🔊 Suara Interaktif:</strong> Dilengkapi efek suara ceria dan panduan suara Bahasa Indonesia (Text-to-Speech).</li>
+                        <li><strong>🌙 Adaptif &amp; Ramah Mata:</strong> Tampilan rasio 16:9 yang estetik di Tablet/Laptop serta mendukung Tema Gelap.</li>
+                    </ul>
+                </div>
+                
+                <button onclick="closeAbout()" class="mt-6 w-full bg-gradient-to-b from-teal-400 to-teal-500 text-white font-extrabold py-3 rounded-2xl shadow-[0_5px_0_#0f766e] active:translate-y-2 active:shadow-none transition-all text-lg">Mengerti! 👍</button>
+            </div>
+        </div>
+
         <!-- Modal Settings -->
         <div id="modalSettings" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden items-center justify-center z-[999] p-4">
             <div class="bg-white dark:bg-gray-800 rounded-3xl p-5 sm:p-6 md:p-8 max-w-sm w-full shadow-2xl pop-in transform text-center border-8 border-indigo-100 dark:border-indigo-900 max-h-[90vh] overflow-y-auto scroll-container">
                 <span class="text-4xl sm:text-6xl mb-2 block">⚙️</span>
                 <h2 class="text-lg sm:text-xl font-extrabold mb-3 text-indigo-600 dark:text-indigo-400">Pilih Tipe Game (Cocokkan)</h2>
                 <div class="flex gap-2 mb-4">
-                    <button id="btnModeAlfabet" onclick="setSubMode('alfabet')" class="flex-1 bg-purple-500 text-white font-extrabold py-2 rounded-2xl shadow-[0_4px_0_#6b21a8] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-base border-4 border-purple-300">Alfabet</button>
-                    <button id="btnModeAngka" onclick="setSubMode('angka')" class="flex-1 bg-blue-400 text-white font-extrabold py-2 rounded-2xl shadow-[0_4px_0_#2563eb] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-base border-4 border-transparent opacity-60">Angka</button>
+                    <button id="btnModeAlfabet" onclick="setSubMode('alfabet')" class="flex-1 bg-purple-500 text-white font-extrabold py-2 rounded-2xl shadow-[0_4px_0_#6b21a8] active:translate-y-1 active:shadow-none transition-all text-base sm:text-xl border-4 border-purple-300">Alfabet</button>
+                    <button id="btnModeAngka" onclick="setSubMode('angka')" class="flex-1 bg-blue-400 text-white font-extrabold py-2 rounded-2xl shadow-[0_4px_0_#2563eb] active:translate-y-1 active:shadow-none transition-all text-base sm:text-xl border-4 border-transparent opacity-60">Angka</button>
                 </div>
 
                 <h2 class="text-lg sm:text-xl font-extrabold mb-3 text-indigo-600 dark:text-indigo-400">Tingkat Kesulitan</h2>
                 <div class="flex flex-col gap-2 mb-6">
-                    <button id="btnLevelMudah" onclick="setLevel('mudah')" class="level-btn bg-green-400 text-white font-extrabold py-2 rounded-2xl shadow-[0_4px_0_#16a34a] active:translate-y-1 active:shadow-none transition-all text-xs sm:text-sm">Mudah (3 Item)</button>
-                    <button id="btnLevelSedang" onclick="setLevel('sedang')" class="level-btn bg-yellow-400 text-white font-extrabold py-2 rounded-2xl shadow-[0_4px_0_#ca8a04] active:translate-y-1 active:shadow-none transition-all text-xs sm:text-sm">Sedang (6 Item)</button>
-                    <button id="btnLevelSulit" onclick="setLevel('sulit')" class="level-btn bg-red-400 text-white font-extrabold py-2 rounded-2xl shadow-[0_4px_0_#dc2626] active:translate-y-1 active:shadow-none transition-all text-xs sm:text-sm">Sulit (9 Item)</button>
+                    <button id="btnLevelMudah" onclick="setLevel('mudah')" class="level-btn bg-green-400 text-white font-extrabold py-2 sm:py-4 rounded-2xl shadow-[0_4px_0_#16a34a] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-xl">Mudah (3 Item)</button>
+                    <button id="btnLevelSedang" onclick="setLevel('sedang')" class="level-btn bg-yellow-400 text-white font-extrabold py-2 sm:py-4 rounded-2xl shadow-[0_4px_0_#ca8a04] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-xl">Sedang (6 Item)</button>
+                    <button id="btnLevelSulit" onclick="setLevel('sulit')" class="level-btn bg-red-400 text-white font-extrabold py-2 sm:py-4 rounded-2xl shadow-[0_4px_0_#dc2626] active:translate-y-1 active:shadow-none transition-all text-sm sm:text-xl">Sulit (9 Item)</button>
                 </div>
 
                 <!-- INTEGRASI DATABASE GOOGLE SHEETS -->
@@ -625,10 +671,6 @@
             if (!name || name.trim() === '') name = 'Anonim';
             const pClass = playerClass || '-';
             const pSchool = school || '-';
-            
-            if (!leaderboards[gameKey]) {
-                leaderboards[gameKey] = [];
-            }
             
             // --- SYNC DENGAN GOOGLE SHEETS CLOUD (Jika URL Apps Script Dikonfigurasi) ---
             if (gasWebappUrl && gasWebappUrl.trim() !== '') {
@@ -1540,6 +1582,20 @@
             playSound('click');
             document.getElementById('modalInstructions').classList.add('hidden');
             document.getElementById('modalInstructions').classList.remove('flex');
+        }
+
+        // --- SISTEM MODAL PENJELASAN APLIKASI ---
+        document.getElementById('btnOpenAbout').addEventListener('click', () => {
+            initAudio();
+            playSound('click');
+            document.getElementById('modalAbout').classList.remove('hidden');
+            document.getElementById('modalAbout').classList.add('flex');
+        });
+
+        function closeAbout() {
+            playSound('click');
+            document.getElementById('modalAbout').classList.add('hidden');
+            document.getElementById('modalAbout').classList.remove('flex');
         }
 
         document.getElementById('btnOpenLeaderboard').addEventListener('click', () => {
